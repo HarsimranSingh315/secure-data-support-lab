@@ -1,0 +1,11 @@
+#!/bin/sh
+# Lab hosts sit behind the FRR routers, not Docker's gateway. Send all lab traffic (10.0.0.0/8)
+# to this site's router, keep Docker's default route for internet access, then run the service.
+if [ -n "${LAB_GW:-}" ]; then
+  if ip route replace 10.0.0.0/8 via "$LAB_GW"; then
+    echo "lab-route: 10.0.0.0/8 via $LAB_GW"
+  else
+    echo "lab-route: could not set route via $LAB_GW (needs cap_add NET_ADMIN)" >&2
+  fi
+fi
+exec "$@"

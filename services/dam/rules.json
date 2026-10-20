@@ -1,0 +1,7 @@
+{
+  "sensitive_tables": ["public.cardholders"],
+  "app_users": ["svc_app"],
+  "dba_users": ["alice", "postgres"],
+  "brute_force_threshold": 5,
+  "brute_force_window_s": 60
+}

@@ -1,0 +1,32 @@
+! r1 - Site A edge router. %%IF:x%% is replaced at start-up with the interface that owns an
+! address beginning with x (Docker does not guarantee interface names).
+frr defaults traditional
+hostname r1
+log file /var/log/frr/frr.log informational
+service integrated-vtysh-config
+!
+interface %%IF:10.10.10.%%
+ description site-a-lan
+!
+interface %%IF:10.0.12.%%
+ description transit-to-r2
+ ip ospf cost 10
+ ip ospf hello-interval 2
+ ip ospf dead-interval 8
+!
+interface %%IF:10.0.13.%%
+ description transit-to-r3 (slow backup link)
+ ip ospf cost 100
+ ip ospf hello-interval 2
+ ip ospf dead-interval 8
+!
+router ospf
+ ospf router-id 1.1.1.1
+ log-adjacency-changes detail
+ passive-interface %%IF:10.10.10.%%
+ network 10.10.10.0/24 area 0
+ network 10.0.12.0/24 area 0
+ network 10.0.13.0/24 area 0
+!
+line vty
+!

@@ -1,0 +1,12 @@
+# Generated per machine - never commit keys, certificates or passwords
+certs/*
+!certs/.gitkeep
+secrets/*
+!secrets/.gitkeep
+captures/*
+!captures/.gitkeep
+bundles/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store

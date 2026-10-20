@@ -1,0 +1,65 @@
+dn: dc=securedata,dc=lab
+objectClass: dcObject
+objectClass: organization
+dc: securedata
+o: SecureData Lab
+
+dn: ou=people,dc=securedata,dc=lab
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,dc=securedata,dc=lab
+objectClass: organizationalUnit
+ou: groups
+
+dn: uid=alice,ou=people,dc=securedata,dc=lab
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: alice
+cn: Alice Martin
+sn: Martin
+title: Database Administrator
+mail: alice@securedata.lab
+uidNumber: 10001
+gidNumber: 20001
+homeDirectory: /home/alice
+userPassword: {SSHA}zT6gcdi9eaYyMYzxJLvz3BkZ5iSgpEen
+
+dn: uid=bob,ou=people,dc=securedata,dc=lab
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: bob
+cn: Bob Chen
+sn: Chen
+title: Data Analyst
+mail: bob@securedata.lab
+uidNumber: 10002
+gidNumber: 20002
+homeDirectory: /home/bob
+userPassword: {SSHA}cwEkN41RZmxygYEixXiTkos2+Gtd18Us
+
+dn: uid=carol,ou=people,dc=securedata,dc=lab
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: carol
+cn: Carol Singh
+sn: Singh
+title: Support Engineer
+mail: carol@securedata.lab
+uidNumber: 10003
+gidNumber: 20002
+homeDirectory: /home/carol
+userPassword: {SSHA}vAKv+ficPPQUTdM453/PE6Z/3DO9DEow
+
+dn: cn=dbadmins,ou=groups,dc=securedata,dc=lab
+objectClass: posixGroup
+cn: dbadmins
+gidNumber: 20001
+memberUid: alice
+
+dn: cn=analysts,ou=groups,dc=securedata,dc=lab
+objectClass: posixGroup
+cn: analysts
+gidNumber: 20002
+memberUid: bob
+memberUid: carol

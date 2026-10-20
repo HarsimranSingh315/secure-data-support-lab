@@ -1,0 +1,209 @@
+# SecureData Support Lab - two sites joined by three OSPF routers, with a firewall in front of Site B.
+#
+#   Site A 10.10.10.0/24 : toolbox (support workstation), ldap (directory)
+#   Site B 10.20.20.0/24 : db (PostgreSQL + pgAudit), kms (OpenBao), app (cardholder API), dam (monitor)
+#   r1 (Site A edge) -- r2 (core) -- r3 (Site B edge + firewall), plus a slow r1 -- r3 backup link
+#
+# Start with `make up`, not `docker compose up`: it creates certificates and secrets first.
+name: securedata-lab
+
+x-lab-hosts: &lab-hosts
+  - "ldap.site-a.lab:10.10.10.20"
+  - "toolbox.site-a.lab:10.10.10.10"
+  - "db.site-b.lab:10.20.20.10"
+  - "kms.site-b.lab:10.20.20.20"
+  - "app.site-b.lab:10.20.20.30"
+
+# Docker 28+ drops packets addressed to a container from any other bridge. Our routers forward
+# between bridges on purpose, so these lab networks opt out of that protection (lab use only).
+x-lab-net-opts: &lab-net-opts
+  com.docker.network.bridge.gateway_mode_ipv4: nat-unprotected
+
+x-router: &router
+  build:
+    context: .
+    dockerfile: services/router/Dockerfile
+  image: securedata-lab/router:0.1
+  privileged: true
+  init: true
+  sysctls:
+    net.ipv4.ip_forward: "1"
+    net.ipv4.conf.all.rp_filter: "0"
+    net.ipv4.conf.default.rp_filter: "0"
+  restart: unless-stopped
+
+services:
+  r1:
+    <<: *router
+    hostname: r1
+    volumes:
+      - ./services/router/r1/frr.conf.tmpl:/etc/lab/frr.conf.tmpl:ro
+    networks:
+      site_a: { ipv4_address: 10.10.10.2 }
+      r1r2:   { ipv4_address: 10.0.12.11 }
+      r1r3:   { ipv4_address: 10.0.13.11 }
+
+  r2:
+    <<: *router
+    hostname: r2
+    volumes:
+      - ./services/router/r2/frr.conf.tmpl:/etc/lab/frr.conf.tmpl:ro
+    networks:
+      r1r2: { ipv4_address: 10.0.12.12 }
+      r2r3: { ipv4_address: 10.0.23.22 }
+
+  r3:
+    <<: *router
+    hostname: r3
+    volumes:
+      - ./services/router/r3/frr.conf.tmpl:/etc/lab/frr.conf.tmpl:ro
+      - ./services/router/r3/nftables.nft:/etc/lab/nftables.nft:ro
+    networks:
+      site_b: { ipv4_address: 10.20.20.2 }
+      r2r3:   { ipv4_address: 10.0.23.23 }
+      r1r3:   { ipv4_address: 10.0.13.13 }
+
+  toolbox:
+    build:
+      context: .
+      dockerfile: services/toolbox/Dockerfile
+    image: securedata-lab/toolbox:0.1
+    hostname: toolbox
+    cap_add: [NET_ADMIN, NET_RAW]
+    environment:
+      LAB_GW: 10.10.10.2
+    extra_hosts: *lab-hosts
+    volumes:
+      - ./certs/ca-chain.pem:/lab-certs/ca-chain.pem:ro
+      - ./captures:/captures
+    networks:
+      site_a: { ipv4_address: 10.10.10.10 }
+    depends_on: [r1]
+    restart: unless-stopped
+
+  ldap:
+    build:
+      context: .
+      dockerfile: services/ldap/Dockerfile
+    image: securedata-lab/ldap:0.1
+    hostname: ldap
+    cap_add: [NET_ADMIN]
+    environment:
+      LAB_GW: 10.10.10.2
+    extra_hosts: *lab-hosts
+    volumes:
+      - ./certs/ldap:/lab-certs:ro
+      - ldap-data:/var/lib/openldap/openldap-data
+    networks:
+      site_a: { ipv4_address: 10.10.10.20 }
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep slapd >/dev/null || exit 1"]
+      interval: 10s
+      retries: 5
+    depends_on: [r1]
+    restart: unless-stopped
+
+  db:
+    build:
+      context: .
+      dockerfile: services/db/Dockerfile
+    image: securedata-lab/db:0.1
+    hostname: db
+    cap_add: [NET_ADMIN]
+    environment:
+      LAB_GW: 10.20.20.2
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg-admin-password
+      APP_DB_PASSWORD_FILE: /run/secrets/app-db-password
+      # The directory's certificate must chain to our CA for LDAP StartTLS to succeed
+      LDAPTLS_CACERT: /var/lib/postgresql/certs/ca-chain.pem
+      LDAPTLS_REQCERT: demand
+    extra_hosts: *lab-hosts
+    volumes:
+      - ./certs/db:/lab-certs:ro
+      - ./secrets:/run/secrets:ro
+      - pg-data:/var/lib/postgresql/data
+      - pg-logs:/var/log/postgresql/lab
+    networks:
+      site_b: { ipv4_address: 10.20.20.10 }
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      retries: 10
+    depends_on: [r3, ldap]
+    restart: unless-stopped
+
+  kms:
+    build:
+      context: .
+      dockerfile: services/kms/Dockerfile
+    image: securedata-lab/kms:0.1
+    hostname: kms
+    cap_add: [NET_ADMIN]
+    environment:
+      LAB_GW: 10.20.20.2
+    extra_hosts: *lab-hosts
+    volumes:
+      - ./certs/kms:/lab-certs:ro
+      - kms-data:/openbao/file
+    networks:
+      site_b: { ipv4_address: 10.20.20.20 }
+    depends_on: [r3]
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: services/app/Dockerfile
+    image: securedata-lab/app:0.1
+    hostname: app
+    cap_add: [NET_ADMIN]
+    environment:
+      LAB_GW: 10.20.20.2
+    extra_hosts: *lab-hosts
+    volumes:
+      - ./certs/app:/lab-certs:ro
+      - ./secrets:/run/secrets:ro
+    ports:
+      - "127.0.0.1:8443:8443"
+    networks:
+      site_b: { ipv4_address: 10.20.20.30 }
+    depends_on:
+      db: { condition: service_healthy }
+      kms: { condition: service_started }
+    restart: unless-stopped
+
+  dam:
+    build:
+      context: .
+      dockerfile: services/dam/Dockerfile
+    image: securedata-lab/dam:0.1
+    network_mode: none
+    volumes:
+      - pg-logs:/pglogs:ro
+      - dam-alerts:/dam
+    depends_on: [db]
+    restart: unless-stopped
+
+networks:
+  site_a:
+    driver_opts: *lab-net-opts
+    ipam: { config: [ { subnet: 10.10.10.0/24, gateway: 10.10.10.1 } ] }
+  site_b:
+    driver_opts: *lab-net-opts
+    ipam: { config: [ { subnet: 10.20.20.0/24, gateway: 10.20.20.1 } ] }
+  r1r2:
+    driver_opts: *lab-net-opts
+    ipam: { config: [ { subnet: 10.0.12.0/24, gateway: 10.0.12.1 } ] }
+  r2r3:
+    driver_opts: *lab-net-opts
+    ipam: { config: [ { subnet: 10.0.23.0/24, gateway: 10.0.23.1 } ] }
+  r1r3:
+    driver_opts: *lab-net-opts
+    ipam: { config: [ { subnet: 10.0.13.0/24, gateway: 10.0.13.1 } ] }
+
+volumes:
+  ldap-data:
+  pg-data:
+  pg-logs:
+  kms-data:
+  dam-alerts:

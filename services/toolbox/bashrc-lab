@@ -1,0 +1,9 @@
+# Shortcuts for the lab workstation
+export PGSSLMODE=verify-full
+export PGSSLROOTCERT=/lab-certs/ca-chain.pem
+export LDAPTLS_CACERT=/lab-certs/ca-chain.pem
+alias dbalice='psql "host=db.site-b.lab dbname=appdb user=alice"'
+alias dbbob='psql "host=db.site-b.lab dbname=appdb user=bob"'
+alias ldapwho='ldapwhoami -x -ZZ -H ldap://ldap.site-a.lab'
+alias apphealth='curl -s --cacert /lab-certs/ca-chain.pem https://app.site-b.lab:8443/health | jq'
+echo "SecureData lab toolbox. Try: apphealth | dbbob | traceroute -n db.site-b.lab | hsm-demo"

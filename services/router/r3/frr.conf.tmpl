@@ -1,0 +1,31 @@
+! r3 - Site B edge router and firewall (nftables rules in nftables.nft).
+frr defaults traditional
+hostname r3
+log file /var/log/frr/frr.log informational
+service integrated-vtysh-config
+!
+interface %%IF:10.20.20.%%
+ description site-b-lan
+!
+interface %%IF:10.0.23.%%
+ description transit-to-r2
+ ip ospf cost 10
+ ip ospf hello-interval 2
+ ip ospf dead-interval 8
+!
+interface %%IF:10.0.13.%%
+ description transit-to-r1 (slow backup link)
+ ip ospf cost 100
+ ip ospf hello-interval 2
+ ip ospf dead-interval 8
+!
+router ospf
+ ospf router-id 3.3.3.3
+ log-adjacency-changes detail
+ passive-interface %%IF:10.20.20.%%
+ network 10.20.20.0/24 area 0
+ network 10.0.23.0/24 area 0
+ network 10.0.13.0/24 area 0
+!
+line vty
+!

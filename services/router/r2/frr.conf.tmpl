@@ -1,0 +1,26 @@
+! r2 - core router between the two sites.
+frr defaults traditional
+hostname r2
+log file /var/log/frr/frr.log informational
+service integrated-vtysh-config
+!
+interface %%IF:10.0.12.%%
+ description transit-to-r1
+ ip ospf cost 10
+ ip ospf hello-interval 2
+ ip ospf dead-interval 8
+!
+interface %%IF:10.0.23.%%
+ description transit-to-r3
+ ip ospf cost 10
+ ip ospf hello-interval 2
+ ip ospf dead-interval 8
+!
+router ospf
+ ospf router-id 2.2.2.2
+ log-adjacency-changes detail
+ network 10.0.12.0/24 area 0
+ network 10.0.23.0/24 area 0
+!
+line vty
+!

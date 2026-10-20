@@ -1,0 +1,25 @@
+# FRR daemons for the lab routers: OSPF is the routing protocol in use; RIP is enabled so you can
+# switch to it in the RIP vs OSPF exercise (docs/runbooks/rip-vs-ospf.md).
+bgpd=no
+ospfd=yes
+ospf6d=no
+ripd=yes
+ripngd=no
+isisd=no
+pimd=no
+ldpd=no
+nhrpd=no
+eigrpd=no
+babeld=no
+sharpd=no
+pbrd=no
+bfdd=no
+fabricd=no
+vrrpd=no
+pathd=no
+staticd=yes
+vtysh_enable=yes
+zebra_options="  -A 127.0.0.1 -s 90000000"
+ospfd_options="  -A 127.0.0.1"
+ripd_options="   -A 127.0.0.1"
+staticd_options="-A 127.0.0.1"

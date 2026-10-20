@@ -1,0 +1,60 @@
+name: ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint-and-unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell lint
+        run: shellcheck scripts/*.sh services/*/*.sh services/common/lab-route
+      - name: Unit tests (DAM watcher, app + mock KMS)
+        run: |
+          python3 -m pip install --quiet pytest "psycopg[binary]"
+          python3 -m pytest -q services/dam/tests services/app/tests
+      - name: PKI builds a valid chain
+        run: |
+          CERTS_DIR=$RUNNER_TEMP/certs ./scripts/pki.sh init
+          openssl verify -CAfile $RUNNER_TEMP/certs/ca-chain.pem $RUNNER_TEMP/certs/db/leaf.crt
+      - name: Compose file is valid
+        run: |
+          mkdir -p certs secrets && touch certs/ca-chain.pem
+          docker compose config -q
+
+  integration:
+    # Builds and starts the full lab, then checks routing, firewall, TLS, LDAP login, KMS and DAM.
+    needs: lint-and-unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start the lab
+        run: make up
+      - name: Seed data through the app (KMS encryption path)
+        run: make seed
+      - name: Checks
+        run: |
+          set -x
+          docker compose exec -T r1 vtysh -c "show ip ospf neighbor" | grep -c Full | grep -q 2
+          docker compose exec -T toolbox curl -sf --cacert /lab-certs/ca-chain.pem https://app.site-b.lab:8443/health
+          docker compose exec -T toolbox bash -lc "PGPASSWORD='Lab-alice-2026!' psql 'host=db.site-b.lab dbname=appdb user=alice sslmode=verify-full sslrootcert=/lab-certs/ca-chain.pem' -Atc 'select count(*) from cardholders'" | grep -q 3
+      - name: Scenario round-trips
+        run: |
+          for s in firewall-drop kms-sealed data-exfiltration; do
+            ./scripts/scenario.sh break $s
+            sleep 5
+            ./scripts/scenario.sh fix $s
+          done
+          sleep 5
+          make alerts | grep -q bulk-read-sensitive
+      - name: Support bundle
+        if: always()
+        run: make bundle || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: support-bundle
+          path: bundles/*.tar.gz
