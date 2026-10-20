@@ -146,6 +146,17 @@ def test_firewall_with_extra_drop_rule_still_reports_policy_without_naming_cause
     assert "CHG-1042" not in c.summary and all("CHG-1042" not in f.label for f in c.facts)
 
 
+def test_db_probe_uses_dedicated_identity_not_a_real_or_unknown_user():
+    c = run("db", FakeRunner())
+    assert c.evidence[0].repro == ("docker compose exec -e PGSSLMODE=require toolbox pg_isready "
+                                   "-h db.site-b.lab -p 5432 -d appdb -U wb_probe -t 3")
+    hba = (Path(__file__).resolve().parents[3] / "services/db/pg_hba.conf").read_text()
+    probe = [ln for ln in hba.splitlines() if "wb_probe" in ln and not ln.startswith("#")]
+    reject = [i for i, ln in enumerate(hba.splitlines()) if ln.startswith("host ") and "reject" in ln]
+    assert probe and "scram-sha-256" in probe[0]
+    assert hba.splitlines().index(probe[0]) < reject[0]      # must come before the catch-all reject
+
+
 def test_db_no_response_is_down_with_timeout_hint():
     c = run("db", FakeRunner({("toolbox", "pg_isready"): (2, fx("pg_noresponse.txt"))}))
     assert c.status == "down" and "firewall" in c.meaning

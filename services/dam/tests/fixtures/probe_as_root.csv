@@ -1,0 +1,18 @@
+2026-10-20 08:24:16.326 MDT,,,266,127.0.0.1:55572,6ad77990.10a,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=55572,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.327 MDT,root,appdb,266,127.0.0.1:55572,6ad77990.10a,2,authentication,2026-10-20 08:24:16 MDT,3/1,0,FATAL,28000,"pg_hba.conf rejects connection for host ""127.0.0.1"", user ""root"", database ""appdb"", no encryption",,,,,,,,,,client backend,,0
+2026-10-20 08:24:16.358 MDT,,,268,127.0.0.1:48270,6ad77990.10c,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48270,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.389 MDT,,,270,127.0.0.1:48280,6ad77990.10e,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48280,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.389 MDT,root,appdb,270,127.0.0.1:48280,6ad77990.10e,2,authentication,2026-10-20 08:24:16 MDT,3/3,0,FATAL,28000,"pg_hba.conf rejects connection for host ""127.0.0.1"", user ""root"", database ""appdb"", no encryption",,,,,,,,,,client backend,,0
+2026-10-20 08:24:16.420 MDT,,,272,127.0.0.1:48292,6ad77990.110,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48292,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.451 MDT,,,274,127.0.0.1:48298,6ad77990.112,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48298,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.451 MDT,root,appdb,274,127.0.0.1:48298,6ad77990.112,2,authentication,2026-10-20 08:24:16 MDT,3/5,0,FATAL,28000,"pg_hba.conf rejects connection for host ""127.0.0.1"", user ""root"", database ""appdb"", no encryption",,,,,,,,,,client backend,,0
+2026-10-20 08:24:16.481 MDT,,,276,127.0.0.1:48312,6ad77990.114,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48312,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.516 MDT,,,278,127.0.0.1:48316,6ad77990.116,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48316,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.517 MDT,root,appdb,278,127.0.0.1:48316,6ad77990.116,2,authentication,2026-10-20 08:24:16 MDT,3/7,0,FATAL,28000,"pg_hba.conf rejects connection for host ""127.0.0.1"", user ""root"", database ""appdb"", no encryption",,,,,,,,,,client backend,,0
+2026-10-20 08:24:16.546 MDT,,,280,127.0.0.1:48324,6ad77990.118,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48324,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.576 MDT,,,282,127.0.0.1:48336,6ad77990.11a,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48336,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.576 MDT,root,appdb,282,127.0.0.1:48336,6ad77990.11a,2,authentication,2026-10-20 08:24:16 MDT,3/9,0,FATAL,28000,"pg_hba.conf rejects connection for host ""127.0.0.1"", user ""root"", database ""appdb"", no encryption",,,,,,,,,,client backend,,0
+2026-10-20 08:24:16.607 MDT,,,284,127.0.0.1:48340,6ad77990.11c,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48340,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.637 MDT,,,286,127.0.0.1:48342,6ad77990.11e,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48342,,,,,,,,,,not initialized,,0
+2026-10-20 08:24:16.638 MDT,root,appdb,286,127.0.0.1:48342,6ad77990.11e,2,authentication,2026-10-20 08:24:16 MDT,3/11,0,FATAL,28000,"pg_hba.conf rejects connection for host ""127.0.0.1"", user ""root"", database ""appdb"", no encryption",,,,,,,,,,client backend,,0
+2026-10-20 08:24:16.668 MDT,,,288,127.0.0.1:48348,6ad77990.120,1,,2026-10-20 08:24:16 MDT,,0,LOG,00000,connection received: host=127.0.0.1 port=48348,,,,,,,,,,not initialized,,0

@@ -26,7 +26,7 @@ otherwise click through the warning once.
 | Router r1 / r2 / r3 | each router | `vtysh -c "show ip ospf neighbor json"` | 2 neighbours in state Full |
 | Firewall | r3 | `nft list table inet labfw` | policy table loaded (shows allow and drop counters) |
 | Directory | toolbox | `ldapwhoami -x -ZZ -H ldap://ldap.site-a.lab` | StartTLS succeeds and the cert is trusted |
-| Database | toolbox | `pg_isready -h db.site-b.lab -t 3` | accepting connections across the routed path |
+| Database | toolbox | `pg_isready -h db.site-b.lab -U wb_probe -t 3` over TLS | accepting connections across the routed path |
 | Cardholder app | toolbox | `curl --cacert … https://app.site-b.lab:8443/health` | HTTP 200 (503 = a dependency failed) |
 | Key manager | kms | `bao status -format=json` | initialised and unsealed |
 | Activity monitor | dam | counts lines in `/dam/alerts.jsonl` | running (alerts are findings, not failures) |
@@ -70,6 +70,10 @@ here only because this is a local, single-user lab, and it is contained by:
   `nosniff` headers, structured request logs with request IDs.
 - **Hardened container.** Read-only root filesystem, all Linux capabilities dropped,
   `no-new-privileges`. It runs as root only because the Docker socket requires it.
+- **Probes do not pollute the audit trail.** The database probe uses `wb_probe`, an identity that
+  pg_hba.conf allows over TLS but that cannot log in; the probe hangs up before authenticating,
+  which PostgreSQL does not log. (Day 1 first probed as `root`, which wrote a failed login every
+  10 s and set off the brute-force alert: see docs/postmortems/WB-001-probe-false-positive.md.)
 - **No secrets shown.** Checks read status, never keys or passwords. The KMS card shows seal
   state and version, never the unseal key or tokens.
 

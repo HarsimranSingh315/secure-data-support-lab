@@ -180,9 +180,14 @@ def ldap_check(runner: Runner, spec: Spec) -> Check:
 
 
 # ---------------------------------------------------------------- database
+# Probes as wb_probe, a dedicated identity allowed by pg_hba.conf but unable to log in. Probing as
+# any other user writes an authentication failure to the db log on every check, which the activity
+# monitor (correctly) reports as a brute-force attack. WB-001 in docs/postmortems.
 
 def db_check(runner: Runner, spec: Spec) -> Check:
-    r = runner.exec("toolbox", ["pg_isready", "-h", "db.site-b.lab", "-p", "5432", "-d", "appdb", "-t", "3"])
+    r = runner.exec("toolbox", ["pg_isready", "-h", "db.site-b.lab", "-p", "5432",
+                                "-d", "appdb", "-U", "wb_probe", "-t", "3"],
+                   env={"PGSSLMODE": "require"})   # hostssl only; a plain probe would be rejected and logged
     if not r.ran:
         return could_not_run(spec, r, vantage="toolbox")
     facts = [("from", "toolbox (Site A) through r1 → r2 → r3"), ("server", "db.site-b.lab:5432")]

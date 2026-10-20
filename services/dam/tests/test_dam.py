@@ -84,3 +84,19 @@ def test_cli_once_writes_alert_file(tmp_path, capsys):
     assert dam.main(["--log", FIXTURE, "--alerts", str(out), "--once"]) == 0
     lines = out.read_text().splitlines()
     assert lines and all(json.loads(l)["severity"] in {"LOW", "MEDIUM", "HIGH"} for l in lines)
+
+
+def test_health_probe_as_unknown_user_looks_like_brute_force():
+    """WB-001: a real PostgreSQL 16 log of six pg_isready probes sent as user "root" and six as
+    "wb_probe". Only the root probes are rejected (FATAL 28000) and they alone trip the rule;
+    the wb_probe probes leave no authentication record at all."""
+    det = dam.Detector(dam.Config())
+    alerts = []
+    path = os.path.join(os.path.dirname(__file__), "fixtures", "probe_as_root.csv")
+    for row in dam.read_once(path):
+        ev = dam.parse_row(row)
+        if ev:
+            alerts.extend(det.check(ev))
+    bf = by_rule(alerts, "brute-force-login")
+    assert bf and all(a["user"] == "root" for a in bf)
+    assert not any("wb_probe" in json.dumps(a) for a in alerts)
