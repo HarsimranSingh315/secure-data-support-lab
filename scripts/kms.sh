@@ -30,17 +30,26 @@ unseal() {
   echo "kms: unsealed"
 }
 
+# Labs first set up with OpenBao 2.1 created the audit device through the API at "file/".
+# It is now declared in kms.hcl as "lab-audit/", so remove the old duplicate once.
+migrate_audit() {
+  local root; root=$(field '.root_token')
+  if dc exec -T -e BAO_TOKEN="$root" kms bao audit list 2>/dev/null | grep -q '^file/'; then
+    dc exec -T -e BAO_TOKEN="$root" kms bao audit disable file >/dev/null
+    echo "kms: removed old API audit device file/ (now configured in kms.hcl as lab-audit/)"
+  fi
+}
+
 init() {
   wait_for_kms
   if [[ -f $INIT_FILE ]]; then
-    echo "kms: already initialised, unsealing"; unseal; return
+    echo "kms: already initialised, unsealing"; unseal; migrate_audit; return
   fi
   dc exec -T kms bao operator init -key-shares=1 -key-threshold=1 -format=json > "$INIT_FILE"
   chmod 600 "$INIT_FILE"
   unseal
   local root; root=$(field '.root_token')
   b() { dc exec -T -e BAO_TOKEN="$root" kms bao "$@"; }
-  b audit enable file file_path=/openbao/file/audit.log >/dev/null
   b secrets enable transit >/dev/null
   b write -f transit/keys/cards >/dev/null
   b policy write app-cards /etc/lab/app-cards.hcl >/dev/null

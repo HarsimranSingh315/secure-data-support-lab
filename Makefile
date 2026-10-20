@@ -8,7 +8,7 @@ R ?= r3
 F ?= port 5432
 D ?= 20
 
-.PHONY: help up down reset build secrets pki kms-init kms-unseal status seed toolbox alerts \
+.PHONY: help ui up down reset build secrets pki kms-init kms-unseal status seed toolbox alerts \
         scenarios break hint fix capture bundle test lint logs
 
 help:  ## Show this help
@@ -62,6 +62,13 @@ seed:  ## Create sample cardholders through the app (card numbers go through the
 	  $(DC) exec -T toolbox curl -s --cacert /lab-certs/ca-chain.pem -X POST https://app.site-b.lab:8443/cardholders \
 	    -H 'Content-Type: application/json' -d "{\"full_name\":\"$$n\",\"email\":\"$$e\",\"card_number\":\"$$k\"}"; echo; \
 	done
+
+ui:  ## Show the visual tools and how to open them
+	@echo "Docker Desktop    containers, logs, terminals:      open the Docker Desktop app"
+	@echo "KMS web UI        https://kms.site-b.lab:8200/ui    (one-time setup: docs/visual-tools.md)"
+	@echo "                  root token: $$(sed -n 's/.*"root_token": *"\([^"]*\)".*/\1/p' secrets/kms-init.json 2>/dev/null)"
+	@echo "Database GUI      host 127.0.0.1  port 5433  db appdb  user alice  password Lab-alice-2026!  SSL require"
+	@echo "Packet captures   make capture R=r3 F='port 5432' D=20, then open captures/*.pcap in Wireshark"
 
 toolbox:  ## Open a shell on the Site A support workstation
 	$(DC) exec toolbox bash

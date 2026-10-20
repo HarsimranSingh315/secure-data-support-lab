@@ -75,6 +75,8 @@ services:
     volumes:
       - ./certs/ca-chain.pem:/lab-certs/ca-chain.pem:ro
       - ./captures:/captures
+    ports:
+      - "127.0.0.1:5433:5433"   # database GUI on the Mac -> via this jump host -> db
     networks:
       site_a: { ipv4_address: 10.10.10.10 }
     depends_on: [r1]
@@ -144,6 +146,8 @@ services:
     volumes:
       - ./certs/kms:/lab-certs:ro
       - kms-data:/openbao/file
+    ports:
+      - "127.0.0.1:8200:8200"   # KMS web UI: https://kms.site-b.lab:8200/ui
     networks:
       site_b: { ipv4_address: 10.20.20.20 }
     depends_on: [r3]

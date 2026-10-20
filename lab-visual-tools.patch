@@ -1,0 +1,150 @@
+diff --git a/Makefile b/Makefile
+index 8f5926c..6fb4cb3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -8,7 +8,7 @@ R ?= r3
+ F ?= port 5432
+ D ?= 20
+ 
+-.PHONY: help up down reset build secrets pki kms-init kms-unseal status seed toolbox alerts \
++.PHONY: help ui up down reset build secrets pki kms-init kms-unseal status seed toolbox alerts \
+         scenarios break hint fix capture bundle test lint logs
+ 
+ help:  ## Show this help
+@@ -63,6 +63,13 @@ seed:  ## Create sample cardholders through the app (card numbers go through the
+ 	    -H 'Content-Type: application/json' -d "{\"full_name\":\"$$n\",\"email\":\"$$e\",\"card_number\":\"$$k\"}"; echo; \
+ 	done
+ 
++ui:  ## Show the visual tools and how to open them
++	@echo "Docker Desktop    containers, logs, terminals:      open the Docker Desktop app"
++	@echo "KMS web UI        https://kms.site-b.lab:8200/ui    (one-time setup: docs/visual-tools.md)"
++	@echo "                  root token: $$(sed -n 's/.*"root_token": *"\([^"]*\)".*/\1/p' secrets/kms-init.json 2>/dev/null)"
++	@echo "Database GUI      host 127.0.0.1  port 5433  db appdb  user alice  password Lab-alice-2026!  SSL require"
++	@echo "Packet captures   make capture R=r3 F='port 5432' D=20, then open captures/*.pcap in Wireshark"
++
+ toolbox:  ## Open a shell on the Site A support workstation
+ 	$(DC) exec toolbox bash
+ 
+diff --git a/README.md b/README.md
+index a7228d8..bd78d51 100644
+--- a/README.md
++++ b/README.md
+@@ -84,7 +84,7 @@ make fix   S=firewall-drop     # restore the baseline
+ | data-exfiltration | Database security | [docs/runbooks/data-exfiltration.md](docs/runbooks/data-exfiltration.md) |
+ | brute-force | Authentication | [docs/runbooks/brute-force.md](docs/runbooks/brute-force.md) |
+ 
+-Also: [RIP vs OSPF exercise](docs/runbooks/rip-vs-ospf.md) · [HSM demo](docs/runbooks/hsm-demo.md) · [postmortem template](docs/postmortem-template.md)
++Also: [Visual tools: Docker Desktop, KMS UI, database GUI, Wireshark](docs/visual-tools.md) · [RIP vs OSPF exercise](docs/runbooks/rip-vs-ospf.md) · [HSM demo](docs/runbooks/hsm-demo.md) · [postmortem template](docs/postmortem-template.md)
+ 
+ ## Everyday tools
+ 
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 6af4dc7..624d7fe 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -75,6 +75,8 @@ services:
+     volumes:
+       - ./certs/ca-chain.pem:/lab-certs/ca-chain.pem:ro
+       - ./captures:/captures
++    ports:
++      - "127.0.0.1:5433:5433"   # database GUI on the Mac -> via this jump host -> db
+     networks:
+       site_a: { ipv4_address: 10.10.10.10 }
+     depends_on: [r1]
+@@ -144,6 +146,8 @@ services:
+     volumes:
+       - ./certs/kms:/lab-certs:ro
+       - kms-data:/openbao/file
++    ports:
++      - "127.0.0.1:8200:8200"   # KMS web UI: https://kms.site-b.lab:8200/ui
+     networks:
+       site_b: { ipv4_address: 10.20.20.20 }
+     depends_on: [r3]
+diff --git a/docs/visual-tools.md b/docs/visual-tools.md
+new file mode 100644
+index 0000000..f1aa3da
+--- /dev/null
++++ b/docs/visual-tools.md
+@@ -0,0 +1,48 @@
++# Seeing the lab: visual tools
++
++The lab is mostly command line on purpose (that is how support engineers work), but four visual
++tools make it much easier to see what is going on. `make ui` prints the addresses and logins.
++
++## 1. Docker Desktop (no setup)
++Open the Docker Desktop app and click **Containers -> securedata-lab**.
++- Every service with its status. Click one (for example **r3**) to see:
++  - **Logs**: live output (routers log OSPF changes, the app logs every request as JSON)
++  - **Exec**: a terminal inside that container (try `vtysh -c "show ip ospf neighbor"` on r1)
++  - **Inspect**: its IP addresses, networks and settings
++- **Volumes** shows where the database, KMS and audit logs live.
++Tip: keep the r1 and app logs open while you run `make break S=core-link-down`.
++
++## 2. KMS web UI (OpenBao)
++One-time setup on the Mac:
++1. Make the name resolve to your Mac:
++   `echo "127.0.0.1 kms.site-b.lab" | sudo tee -a /etc/hosts`
++2. Trust the lab's root CA so the browser accepts the certificate (lab only):
++   `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain certs/root-ca.crt`
++   (Or skip this and click through the browser warning.)
++3. Open **https://kms.site-b.lab:8200/ui**, choose **Token**, and paste the root token from `make ui`.
++
++What to look at: **Secrets engines -> transit -> cards** (the encryption key and its versions),
++**Policies -> app-cards** (what the app may do), and try `make break S=kms-sealed` then refresh:
++the UI shows the KMS as sealed.
++
++Undo later: remove the line from `/etc/hosts`, and delete "SecureData Lab Root CA" in Keychain Access.
++
++## 3. Database GUI (TablePlus, DBeaver or pgAdmin, all free)
++The connection goes Mac -> toolbox (Site A) -> routers -> firewall -> database, like a jump host.
++
++| Setting | Value |
++| --- | --- |
++| Host / port | 127.0.0.1 / 5433 |
++| Database | appdb |
++| User / password | alice / Lab-alice-2026! (or bob / Lab-bob-2026!) |
++| SSL | require |
++
++Things to try: browse `cardholders` (only last 4 digits and `vault:v1:...` ciphertext), then run
++`select * from cardholders` as **bob** and check `make alerts`: the DAM watcher flags it.
++During `make break S=firewall-drop` the GUI cannot connect either, because it goes through the same firewall.
++
++## 4. Wireshark (packet captures)
++Install from wireshark.org. Then:
++`make capture R=r3 F='port 5432' D=20` and connect with the database GUI during those 20 seconds.
++Open the file from `captures/` in Wireshark and look for the TCP handshake and the TLS handshake.
++During the firewall incident you will see the SYN arrive and never get an answer.
+diff --git a/scripts/scenario.sh b/scripts/scenario.sh
+index d195119..3c367e8 100755
+--- a/scripts/scenario.sh
++++ b/scripts/scenario.sh
+@@ -53,7 +53,7 @@ do_break() {
+       dc exec -T r2 ip link set dev "$ifc" down
+       ticket INC-2102 P3 "Latency between the sites jumped a few minutes ago. Nothing is down, it is just slower." ;;
+     firewall-drop)
+-      dc exec -T r3 nft insert rule inet labfw to_site_b ip daddr 10.20.20.10 tcp dport 5432 drop comment '"CHG-1042 temporary block"'
++      dc exec -T r3 nft insert rule inet labfw to_site_b ip daddr 10.20.20.10 tcp dport 5432 counter drop comment '"CHG-1042 temporary block"'
+       ticket INC-2103 P1 "Our analysts in Site A cannot connect to the database at all. psql just hangs. The app in Site B is fine." ;;
+     cert-renewal)
+       rm -rf certs/.db.backup && cp -r certs/db certs/.db.backup
+diff --git a/services/toolbox/Dockerfile b/services/toolbox/Dockerfile
+index c6d4917..e194f7d 100644
+--- a/services/toolbox/Dockerfile
++++ b/services/toolbox/Dockerfile
+@@ -3,7 +3,7 @@
+ FROM rockylinux/rockylinux:9
+ RUN dnf -y module enable postgresql:16 && \
+     dnf -y install iproute iputils traceroute mtr bind-utils nmap-ncat telnet tcpdump wireshark-cli \
+-        openldap-clients postgresql openssl jq vim less procps-ng python3 \
++        openldap-clients postgresql openssl jq vim less procps-ng python3 socat \
+         softhsm opensc && \
+     dnf clean all
+ COPY services/common/lab-route /usr/local/bin/lab-route
+@@ -13,4 +13,6 @@ RUN chmod +x /usr/local/bin/lab-route /usr/local/bin/hsm-demo && \
+     echo '[ -f ~/.bashrc-lab ] && . ~/.bashrc-lab' >> /root/.bashrc
+ WORKDIR /root
+ ENTRYPOINT ["/usr/local/bin/lab-route"]
+-CMD ["sleep", "infinity"]
++# Jump-host port forward: a database GUI on the Mac connects to localhost:5433, and the connection
++# reaches the database FROM this workstation (Site A), through the routers and the firewall.
++CMD ["sh", "-c", "socat TCP-LISTEN:5433,fork,reuseaddr TCP:db.site-b.lab:5432 & exec sleep infinity"]

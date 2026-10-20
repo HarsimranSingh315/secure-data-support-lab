@@ -84,7 +84,7 @@ make fix   S=firewall-drop     # restore the baseline
 | data-exfiltration | Database security | [docs/runbooks/data-exfiltration.md](docs/runbooks/data-exfiltration.md) |
 | brute-force | Authentication | [docs/runbooks/brute-force.md](docs/runbooks/brute-force.md) |
 
-Also: [RIP vs OSPF exercise](docs/runbooks/rip-vs-ospf.md) · [HSM demo](docs/runbooks/hsm-demo.md) · [postmortem template](docs/postmortem-template.md)
+Also: [Visual tools: Docker Desktop, KMS UI, database GUI, Wireshark](docs/visual-tools.md) · [RIP vs OSPF exercise](docs/runbooks/rip-vs-ospf.md) · [HSM demo](docs/runbooks/hsm-demo.md) · [postmortem template](docs/postmortem-template.md)
 
 ## Everyday tools
 

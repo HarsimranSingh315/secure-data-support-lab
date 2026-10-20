@@ -1,4 +1,5 @@
-FROM quay.io/openbao/openbao:2.1.0
+# 2.4+ release builds include the web UI (2.1.0 did not)
+FROM quay.io/openbao/openbao:2.4.4
 USER root
 RUN apk add --no-cache iproute2 jq curl
 COPY services/kms/kms.hcl services/kms/app-cards.hcl /etc/lab/

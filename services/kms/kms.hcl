@@ -14,3 +14,12 @@ listener "tcp" {
   tls_key_file    = "/openbao/certs/server.key"
   tls_min_version = "tls12"
 }
+
+# Audit trail of every request (values are HMAC-hashed, never in clear text).
+# Newer OpenBao only allows audit devices to be declared here, not created through the API.
+audit "file" "lab-audit" {
+  description = "lab audit trail"
+  options {
+    file_path = "/openbao/file/audit.log"
+  }
+}

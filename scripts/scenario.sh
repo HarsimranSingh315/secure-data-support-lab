@@ -53,7 +53,7 @@ do_break() {
       dc exec -T r2 ip link set dev "$ifc" down
       ticket INC-2102 P3 "Latency between the sites jumped a few minutes ago. Nothing is down, it is just slower." ;;
     firewall-drop)
-      dc exec -T r3 nft insert rule inet labfw to_site_b ip daddr 10.20.20.10 tcp dport 5432 drop comment '"CHG-1042 temporary block"'
+      dc exec -T r3 nft insert rule inet labfw to_site_b ip daddr 10.20.20.10 tcp dport 5432 counter drop comment '"CHG-1042 temporary block"'
       ticket INC-2103 P1 "Our analysts in Site A cannot connect to the database at all. psql just hangs. The app in Site B is fine." ;;
     cert-renewal)
       rm -rf certs/.db.backup && cp -r certs/db certs/.db.backup
