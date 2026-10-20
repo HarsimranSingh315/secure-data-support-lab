@@ -23,7 +23,6 @@ x-router: &router
   build:
     context: .
     dockerfile: services/router/Dockerfile
-  image: securedata-lab/router:0.1
   privileged: true
   init: true
   sysctls:

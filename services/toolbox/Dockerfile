@@ -3,7 +3,7 @@
 FROM rockylinux/rockylinux:9
 RUN dnf -y module enable postgresql:16 && \
     dnf -y install iproute iputils traceroute mtr bind-utils nmap-ncat telnet tcpdump wireshark-cli \
-        openldap-clients postgresql openssl curl jq vim less procps-ng python3 \
+        openldap-clients postgresql openssl jq vim less procps-ng python3 \
         softhsm opensc && \
     dnf clean all
 COPY services/common/lab-route /usr/local/bin/lab-route

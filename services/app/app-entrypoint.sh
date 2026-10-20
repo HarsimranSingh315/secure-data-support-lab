@@ -11,4 +11,5 @@ chmod 600 /run/app/server.key
 export LAB_CA=/run/app/ca-chain.pem APP_TLS_CERT=/run/app/server.crt APP_TLS_KEY=/run/app/server.key \
        APP_DB_PASSWORD_FILE=/run/app/app-db-password KMS_TOKEN_FILE=/run/app/app-kms-token
 # The KMS token appears after `make kms-init`, which restarts the app so it is copied in here.
+export HOME=/run/app   # libpq looks for optional client certs under $HOME
 exec setpriv --reuid=appuser --regid=appuser --init-groups python3 /srv/app.py

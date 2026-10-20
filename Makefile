@@ -54,7 +54,7 @@ status:  ## Health overview: OSPF, firewall, app, KMS, DAM
 	@echo "== Path from Site A to the database"; $(DC) exec -T toolbox traceroute -n -w1 -q1 db.site-b.lab | tail -n +2 || true
 	@echo "== App health (via the firewall)"; $(DC) exec -T toolbox curl -s --cacert /lab-certs/ca-chain.pem https://app.site-b.lab:8443/health; echo
 	@echo "== KMS"; $(DC) exec -T kms bao status 2>/dev/null | grep -E "Initialized|Sealed" || true
-	@echo "== DAM alerts so far"; $(DC) exec -T dam sh -c 'wc -l < /dam/alerts.jsonl 2>/dev/null || echo 0'
+	@echo "== DAM alerts so far"; $(DC) exec -T dam sh -c 'wc -l 2>/dev/null < /dam/alerts.jsonl || echo 0'
 
 seed:  ## Create sample cardholders through the app (card numbers go through the KMS)
 	@for c in "Asha Rao|asha@example.lab|4111111111111111" "Ben Lee|ben@example.lab|5555555555554444" "Chloe Roy|chloe@example.lab|378282246310005"; do \
