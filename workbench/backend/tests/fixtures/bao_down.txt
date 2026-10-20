@@ -1,0 +1,1 @@
+Error checking seal status: Get "http://127.0.0.1:8399/v1/sys/seal-status": dial tcp 127.0.0.1:8399: connect: connection refused

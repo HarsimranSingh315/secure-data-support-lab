@@ -15,6 +15,10 @@ jobs:
         run: |
           python3 -m pip install --quiet pytest "psycopg[binary]"
           python3 -m pytest -q services/dam/tests services/app/tests
+      - name: Workbench backend tests
+        run: |
+          python3 -m pip install --quiet -r workbench/backend/requirements-dev.txt
+          cd workbench/backend && python3 -m pytest -q tests
       - name: PKI builds a valid chain
         run: |
           CERTS_DIR=$RUNNER_TEMP/certs ./scripts/pki.sh init
@@ -24,9 +28,26 @@ jobs:
           mkdir -p certs secrets && touch certs/ca-chain.pem
           docker compose config -q
 
+  workbench-ui:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: workbench/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: workbench/frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
   integration:
     # Builds and starts the full lab, then checks routing, firewall, TLS, LDAP login, KMS and DAM.
-    needs: lint-and-unit
+    needs: [lint-and-unit, workbench-ui]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -41,6 +62,16 @@ jobs:
           docker compose exec -T r1 vtysh -c "show ip ospf neighbor" | grep -c Full | grep -q 2
           docker compose exec -T toolbox curl -sf --cacert /lab-certs/ca-chain.pem https://app.site-b.lab:8443/health
           docker compose exec -T toolbox bash -lc "PGPASSWORD='Lab-alice-2026!' psql 'host=db.site-b.lab dbname=appdb user=alice sslmode=verify-full sslrootcert=/lab-certs/ca-chain.pem' -Atc 'select count(*) from cardholders'" | grep -q 3
+      - name: Workbench reports the healthy lab, then a sealed KMS
+        run: |
+          wb() { curl -sf --cacert certs/ca-chain.pem "https://localhost:9443/api/overview?refresh=true"; }
+          for i in $(seq 1 30); do wb >/dev/null && break; sleep 2; done
+          wb | jq '{overall, counts}'
+          wb | jq -e '.overall == "ok"' || { wb | jq '.checks[] | select(.status != "ok") | {id, status, summary, evidence}'; exit 1; }
+          ./scripts/scenario.sh break kms-sealed
+          wb | jq -e '(.checks[] | select(.id == "kms") | .status) == "down"'
+          ./scripts/scenario.sh fix kms-sealed
+          wb | jq -e '(.checks[] | select(.id == "kms") | .status) == "ok"'
       - name: Scenario round-trips
         run: |
           for s in firewall-drop kms-sealed data-exfiltration; do

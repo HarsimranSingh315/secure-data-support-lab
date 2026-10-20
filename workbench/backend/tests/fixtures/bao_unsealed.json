@@ -1,0 +1,18 @@
+{
+  "type": "shamir",
+  "initialized": true,
+  "sealed": false,
+  "t": 1,
+  "n": 1,
+  "progress": 0,
+  "nonce": "",
+  "version": "2.4.4",
+  "build_date": "2025-11-24T19:54:48Z",
+  "migration": false,
+  "cluster_name": "vault-cluster-9c6319c4",
+  "cluster_id": "399e3db7-dc25-d841-643d-c7e7ac0e57ef",
+  "recovery_seal": false,
+  "storage_type": "file",
+  "ha_enabled": false,
+  "active_time": "0001-01-01T00:00:00Z"
+}

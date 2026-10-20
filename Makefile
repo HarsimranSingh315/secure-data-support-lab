@@ -9,7 +9,7 @@ F ?= port 5432
 D ?= 20
 
 .PHONY: help ui up down reset build secrets pki kms-init kms-unseal status seed toolbox alerts \
-        scenarios break hint fix capture bundle test lint logs
+        scenarios break hint fix capture bundle test lint logs workbench
 
 help:  ## Show this help
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-12s %s\n", $$1, $$2}'
@@ -27,6 +27,7 @@ build:  ## Build all images
 pki:  ## Create the CA and server certificates (runs OpenSSL 3 inside the toolbox image)
 	@[ -f certs/ca-chain.pem ] && echo "pki: certificates already exist" || { \
 	  $(DC) build toolbox && $(RUN_TOOLBOX) ./scripts/pki.sh init; }
+	@[ -f certs/workbench/server.crt ] || $(RUN_TOOLBOX) ./scripts/pki.sh issue workbench localhost 127.0.0.1
 
 up: secrets pki  ## Build and start the whole lab, then initialise or unseal the KMS
 	@mkdir -p captures bundles
@@ -64,6 +65,7 @@ seed:  ## Create sample cardholders through the app (card numbers go through the
 	done
 
 ui:  ## Show the visual tools and how to open them
+	@echo "Workbench         https://localhost:9443         live overview of the whole lab"
 	@echo "Docker Desktop    containers, logs, terminals:      open the Docker Desktop app"
 	@echo "KMS web UI        https://kms.site-b.lab:8200/ui    (one-time setup: docs/visual-tools.md)"
 	@echo "                  root token: $$(sed -n 's/.*"root_token": *"\([^"]*\)".*/\1/p' secrets/kms-init.json 2>/dev/null)"
@@ -99,9 +101,15 @@ capture:  ## Packet capture on a router: make capture R=r3 F='port 5432' D=20 ->
 bundle:  ## Collect a redacted support bundle
 	./scripts/support-bundle.sh
 
-test:  ## Run unit tests (in a container, nothing to install)
+test:  ## Run unit tests (in containers, nothing to install)
 	docker run --rm -v "$(CURDIR)":/lab -w /lab python:3.12-slim sh -c \
-	  "apt-get update -qq && apt-get install -y -qq openssl >/dev/null && pip install -q pytest 'psycopg[binary]' && python -m pytest -q services/dam/tests services/app/tests"
+	  "apt-get update -qq && apt-get install -y -qq openssl >/dev/null && pip install -q pytest 'psycopg[binary]' -r workbench/backend/requirements-dev.txt && python -m pytest -q services/dam/tests services/app/tests && cd workbench/backend && python -m pytest -q tests"
+	docker run --rm -v "$(CURDIR)/workbench/frontend":/ui -w /ui node:22-alpine sh -c \
+	  "npm ci --no-audit --no-fund --silent && npm run -s typecheck && npm test --silent"
+
+workbench:  ## Rebuild and restart only the workbench (after changing its code)
+	$(DC) up -d --build --no-deps workbench
+	@echo "open https://localhost:9443"
 
 lint:  ## Lint shell scripts (in a container)
 	docker run --rm -v "$(CURDIR)":/mnt -w /mnt koalaman/shellcheck:stable \

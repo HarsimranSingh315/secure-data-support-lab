@@ -81,6 +81,7 @@ case "${1:-}" in
     issue db   db.site-b.lab   10.20.20.10
     issue kms  kms.site-b.lab  10.20.20.20
     issue app  app.site-b.lab  10.20.20.30
+    issue workbench localhost  127.0.0.1
     ;;
   issue) shift; [[ $# -ge 3 ]] || die "usage: $0 issue <name> <dns> <ip|-> [days]"; issue "$@" ;;
   show)  shift; show "$1" ;;

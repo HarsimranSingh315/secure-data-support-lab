@@ -41,9 +41,10 @@ flowchart LR
 | toolbox | Rocky Linux 9 (RHEL-compatible) | Troubleshooting from a workstation: ping, traceroute, mtr, nc, dig, tcpdump, tshark, psql, ldapsearch, openssl |
 | ldap | OpenLDAP | Directory users and groups; passwords only accepted over TLS |
 | db | PostgreSQL 16 + pgAudit | TLS-only access, LDAP and SCRAM authentication, pg_hba rules, audit trail |
-| kms | OpenBao (open-source Vault fork) | Encryption as a service, sealed/unsealed lifecycle, least-privilege policy, audit device |
+| kms | OpenBao 2.4 (open-source Vault fork, web UI) | Encryption as a service, sealed/unsealed lifecycle, least-privilege policy, audit device |
 | app | Python, HTTPS | Card numbers encrypted through the KMS; only last 4 digits + ciphertext stored |
 | dam | Python (written for this lab) | Database activity monitoring: bulk exports, brute force, privilege changes |
+| workbench | FastAPI + React (written for this lab) | Support console: live evidence-backed checks over the whole lab |
 | HSM | SoftHSM 2 + PKCS#11 (in toolbox) | Keys generated and used inside a token, never exported (`hsm-demo`) |
 | PKI | OpenSSL two-tier CA | Root, issuing CA and server certificates with proper SANs |
 
@@ -62,6 +63,14 @@ make toolbox     # shell on the Site A workstation
 From the Mac itself: `curl --cacert certs/ca-chain.pem --resolve app.site-b.lab:8443:127.0.0.1 https://app.site-b.lab:8443/health`
 
 Lab users (directory passwords, lab only): `alice` / `Lab-alice-2026!` (DBA), `bob` / `Lab-bob-2026!` and `carol` / `Lab-carol-2026!` (analysts).
+
+## DataShield Support Workbench (web console)
+
+`make up` also starts a web console at **https://localhost:9443**. Each card runs a real,
+allow-listed check inside the lab (OSPF neighbours, firewall policy, LDAP StartTLS, database
+reachability, app health, KMS seal state, activity monitor) and shows the exact command, its
+output and what it means. Break something with `make break` and watch the cards, the request
+path and the status timeline change. Details, threat model and tests: [docs/workbench.md](docs/workbench.md).
 
 ## Incident scenarios
 
@@ -99,7 +108,7 @@ make down / make reset                 # stop / delete everything including cert
 ## Repository layout
 
 ```
-docker-compose.yml        the whole lab: 5 networks, 9 services
+docker-compose.yml        the whole lab: 5 networks, 9 services + the workbench
 Makefile                  every operation (make help)
 scripts/pki.sh            two-tier CA and certificate issuing
 scripts/kms.sh            KMS init / unseal / status
@@ -107,6 +116,7 @@ scripts/scenario.sh       incident injection, hints and fixes
 scripts/support-bundle.sh diagnostic bundle with secret redaction
 services/router           FRR image, per-router config templates, r3 firewall
 services/{toolbox,ldap,db,kms,app,dam}
+workbench/                web console: backend (FastAPI) and frontend (React + TypeScript)
 docs/runbooks             one runbook per incident
 .github/workflows/ci.yml  lint, unit tests, and a full start-up integration test
 ```

@@ -1,0 +1,28 @@
+{
+  "neighbors":{
+    "10.9.0.2":[
+      {
+        "priority":1,
+        "state":"Full\/DR",
+        "nbrPriority":1,
+        "nbrState":"Full\/DR",
+        "converged":"Full",
+        "role":"DR",
+        "upTimeInMsec":14105,
+        "deadTimeMsecs":3894,
+        "routerDeadIntervalTimerDueMsec":3894,
+        "upTime":"14.105s",
+        "deadTime":"3.894s",
+        "address":"10.9.0.2",
+        "ifaceAddress":"10.9.0.2",
+        "ifaceName":"va:10.9.0.1",
+        "retransmitCounter":0,
+        "linkStateRetransmissionListCounter":0,
+        "requestCounter":0,
+        "linkStateRequestListCounter":0,
+        "dbSummaryCounter":0,
+        "databaseSummaryListCounter":0
+      }
+    ]
+  }
+}

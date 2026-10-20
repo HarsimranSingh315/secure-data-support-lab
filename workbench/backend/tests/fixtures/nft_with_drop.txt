@@ -1,0 +1,23 @@
+table inet labfw {
+	counter dropped_to_site_b {
+		comment "packets dropped on the way into Site B"
+		packets 0 bytes 0
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy accept;
+		ip daddr 10.20.20.0/24 jump to_site_b
+	}
+
+	chain to_site_b {
+		ip daddr 10.20.20.10 tcp dport 5432 counter packets 0 bytes 0 drop comment "CHG-1042 temporary block"
+		ct state established,related accept
+		ct state invalid drop
+		icmp type { echo-reply, destination-unreachable, echo-request, time-exceeded } accept comment "ping and traceroute replies"
+		udp dport 33434-33534 accept comment "traceroute probes"
+		ip saddr 10.10.10.0/24 ip daddr 10.20.20.10 tcp dport 5432 counter packets 0 bytes 0 accept comment "site A -> PostgreSQL (TLS)"
+		ip saddr 10.10.10.0/24 ip daddr 10.20.20.20 tcp dport 8200 counter packets 0 bytes 0 accept comment "site A -> KMS API (TLS)"
+		ip saddr 10.10.10.0/24 ip daddr 10.20.20.30 tcp dport 8443 counter packets 0 bytes 0 accept comment "site A -> app (HTTPS)"
+		counter name "dropped_to_site_b" drop
+	}
+}

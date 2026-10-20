@@ -3,6 +3,7 @@
 #   Site A 10.10.10.0/24 : toolbox (support workstation), ldap (directory)
 #   Site B 10.20.20.0/24 : db (PostgreSQL + pgAudit), kms (OpenBao), app (cardholder API), dam (monitor)
 #   r1 (Site A edge) -- r2 (core) -- r3 (Site B edge + firewall), plus a slow r1 -- r3 backup link
+#   workbench            : web console at https://localhost:9443 (not on the lab networks)
 #
 # Start with `make up`, not `docker compose up`: it creates certificates and secrets first.
 name: securedata-lab
@@ -173,6 +174,27 @@ services:
     depends_on:
       db: { condition: service_healthy }
       kms: { condition: service_started }
+    restart: unless-stopped
+
+  # DataShield Support Workbench: web console over the lab. It reaches the lab only through the
+  # Docker API (fixed, allow-listed checks) and is published on the Mac's loopback interface only.
+  workbench:
+    build:
+      context: .
+      dockerfile: workbench/Dockerfile
+    image: securedata-lab/workbench:0.1
+    hostname: workbench
+    environment:
+      WB_PROJECT: securedata-lab
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./certs/workbench:/lab-certs:ro
+    ports:
+      - "127.0.0.1:9443:9443"   # https://localhost:9443
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
 
   dam:

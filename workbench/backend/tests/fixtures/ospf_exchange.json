@@ -1,0 +1,28 @@
+{
+  "neighbors":{
+    "10.9.0.2":[
+      {
+        "priority":1,
+        "state":"Exchange\/DR",
+        "nbrPriority":1,
+        "nbrState":"Exchange\/DR",
+        "converged":"Exchange",
+        "role":"DR",
+        "upTimeInMsec":27124,
+        "deadTimeMsecs":3877,
+        "routerDeadIntervalTimerDueMsec":3877,
+        "upTime":"27.124s",
+        "deadTime":"3.877s",
+        "address":"10.9.0.2",
+        "ifaceAddress":"10.9.0.2",
+        "ifaceName":"va:10.9.0.1",
+        "retransmitCounter":1,
+        "linkStateRetransmissionListCounter":1,
+        "requestCounter":0,
+        "linkStateRequestListCounter":0,
+        "dbSummaryCounter":0,
+        "databaseSummaryListCounter":0
+      }
+    ]
+  }
+}
