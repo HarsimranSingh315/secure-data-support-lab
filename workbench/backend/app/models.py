@@ -162,3 +162,89 @@ class Topology(BaseModel):
     path: MapPath
     hosts: list[Fact]
     checked_at: str
+
+
+# ---------------------------------------------------------------- captures
+class CaptureMeta(BaseModel):
+    id: str
+    source: Literal["capture", "upload"]
+    point: str
+    point_label: str
+    filter: str
+    filter_label: str
+    seconds: int
+    traffic: str
+    created: str
+    size: int
+    packets: int
+
+
+class CapturePacket(BaseModel):
+    no: int
+    time: float
+    src: str
+    dst: str
+    sport: int | None
+    dport: int | None
+    protocol: str
+    length: int
+    flags: list[str]
+    stream: int | None
+    info: str
+    marks: list[str]
+
+
+class CaptureConversation(BaseModel):
+    stream: int
+    client: str
+    server: str
+    packets: int
+    bytes: int
+    state: str
+    retransmissions: int
+    start: float
+    duration: float
+    protocols: list[str]
+
+
+class CaptureFinding(BaseModel):
+    severity: Literal["pass", "info", "warn", "fail"]
+    title: str
+    detail: str
+    packets: list[int]
+
+
+class CaptureAnalysis(BaseModel):
+    meta: CaptureMeta
+    packets: list[CapturePacket]
+    conversations: list[CaptureConversation]
+    findings: list[CaptureFinding]
+    stats: list[Fact]
+    evidence: list[Evidence]
+
+
+# ---------------------------------------------------------------- incidents
+class IncidentRun(BaseModel):
+    action: str
+    ok: bool
+    output: str
+    exit_code: int | None
+    duration_ms: int
+    at: str
+
+
+class Incident(BaseModel):
+    id: str
+    area: str
+    title: str
+    state: Literal["ready", "active", "resolved"]
+    ticket_id: str | None = None
+    priority: str | None = None
+    customer: str | None = None
+    broken_at: str | None = None
+    fixed_at: str | None = None
+    minutes_to_resolve: float | None = None
+    hints: list[str] = []
+    reveal: str | None = None
+    runbook: str
+    last_run: IncidentRun | None = None

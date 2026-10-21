@@ -186,8 +186,13 @@ services:
     hostname: workbench
     environment:
       WB_PROJECT: securedata-lab
+      # The repo is mounted at the same path as on the host, so scripts/scenario.sh can start
+      # helper containers with bind mounts that the Docker daemon resolves correctly.
+      WB_REPO: ${PWD}
+      WB_DATA: ${PWD}/.workbench
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${PWD}:${PWD}
       - ./certs/workbench:/lab-certs:ro
     ports:
       - "127.0.0.1:9443:9443"   # https://localhost:9443

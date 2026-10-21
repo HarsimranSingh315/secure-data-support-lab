@@ -12,3 +12,4 @@ __pycache__/
 .DS_Store
 workbench/frontend/node_modules/
 workbench/frontend/dist/
+.workbench/

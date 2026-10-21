@@ -85,6 +85,18 @@ jobs:
           sleep 12
           api "/api/topology?refresh=true" | jq -e '.path.uses_backup and ([.links[] | select(.id == "r1_r2") | .status] == ["down"])'
           ./scripts/scenario.sh fix core-link-down
+      - name: Workbench incidents and packet capture (runs scenario.sh inside the workbench)
+        run: |
+          api()  { curl -sf --cacert certs/ca-chain.pem "https://localhost:9443$1"; }
+          post() { curl -sf --cacert certs/ca-chain.pem -X POST -H "X-Workbench-Action: 1" -H "Content-Type: application/json" "https://localhost:9443$1" ${2:+-d "$2"}; }
+          # the guard: no header, no action
+          test "$(curl -s -o /dev/null -w '%{http_code}' --cacert certs/ca-chain.pem -X POST https://localhost:9443/api/incidents/firewall-drop/break)" = 403
+          post /api/incidents/firewall-drop/break | jq -e '.state == "active" and .ticket_id == "INC-2103" and .reveal == null'
+          post /api/captures '{"point":"r3","filter":"db","seconds":6,"traffic":"db"}' | tee /tmp/cap.json | jq '{packets: .meta.packets, findings: [.findings[] | .title]}'
+          jq -e '.findings[0].severity == "fail" and (.findings[0].title | startswith("No reply to connection attempts"))' /tmp/cap.json
+          post /api/incidents/firewall-drop/fix | jq -e '.state == "resolved" and (.reveal | startswith("Firewall"))'
+          api "/api/diagnose?target=db&port=5432" | jq -e '.verdict == "pass"'
+          api /api/actions | jq -e 'length >= 2'
       - name: Scenario round-trips
         run: |
           for s in firewall-drop kms-sealed data-exfiltration; do

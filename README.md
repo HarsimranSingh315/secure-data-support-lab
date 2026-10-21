@@ -76,6 +76,10 @@ Lab users (directory passwords, lab only): `alice` / `Lab-alice-2026!` (DBA), `b
 - **Diagnostics**: a guided "why can't Site A reach X?" that walks name → ping → path → port → TLS
   and names the failing layer, plus individual tests (TCP timeout vs refused, TLS certificate
   checks, route lookups, OSPF interfaces, firewall counters).
+- **Incidents**: the nine scenarios with Start / Hint / Fix buttons (running `scripts/scenario.sh`),
+  the customer's ticket, a timer, notes, and the root cause revealed only after the fix.
+- **Captures**: tcpdump on any router or the client, decoded with tshark: findings (unanswered SYNs,
+  resets, TLS alerts, OSPF MTU), TCP ladder diagrams, packet details, .pcap download.
 
 Break something with `make break` and find the cause in the UI. Details, threat model and tests: [docs/workbench.md](docs/workbench.md).
 

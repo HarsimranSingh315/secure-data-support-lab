@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from .models import Check, Evidence, Fact
-from .runner import ExecResult, Runner
+from .runner import ExecResult, Runner, cap
 
 CA = "/lab-certs/ca-chain.pem"
 TOOLBOX_ENV = {"LDAPTLS_CACERT": CA}
@@ -42,8 +42,9 @@ def evidence(r: ExecResult) -> Evidence:
         cmd = " ".join(f"{k}={shlex.quote(v)}" for k, v in r.env.items()) + " " + cmd
     envs = "".join(f"-e {k}={shlex.quote(v)} " for k, v in r.env.items())
     repro = f"docker compose exec {envs}{r.service} {shlex.join(r.command)}"
-    return Evidence(service=r.service, command=cmd, repro=repro, exit_code=r.exit_code, output=r.output,
-                    duration_ms=r.duration_ms, error=r.error, truncated=r.truncated)
+    shown, cut = cap(r.output)
+    return Evidence(service=r.service, command=cmd, repro=repro, exit_code=r.exit_code, output=shown,
+                    duration_ms=r.duration_ms, error=r.error, truncated=r.truncated or cut)
 
 
 @dataclass(frozen=True)

@@ -272,9 +272,10 @@ def test_api_rejects_bad_input_with_400(api):
     assert api.get("/api/diagnose", params={"target": "db", "port": 3306}).status_code == 400
 
 
-def test_api_is_still_read_only(api):
-    methods = {m for r in api.app.routes for m in (getattr(r, "methods", None) or ())}
-    assert methods <= {"GET", "HEAD"}
+def test_map_and_diagnostics_endpoints_are_read_only(api):
+    for r in api.app.routes:
+        if getattr(r, "path", "").startswith(("/api/topology", "/api/diagnos")):
+            assert set(r.methods) <= {"GET", "HEAD"}
 
 
 def test_api_limits_parallel_diagnostics():

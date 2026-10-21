@@ -265,12 +265,12 @@ def test_api_overview_is_cached_briefly(client):
     assert len(runner.calls) == n          # second call within 2 s reused the result
 
 
-def test_no_endpoint_accepts_commands(client):
+def test_only_the_guarded_action_endpoints_accept_writes(client):
     c, _, app = client
-    paths = {r.path for r in app.routes}
-    assert {"/api/health", "/api/overview", "/api/events"} <= paths
-    assert not any(m in ("POST", "PUT", "PATCH", "DELETE") for r in app.routes for m in getattr(r, "methods", ()) or ())
+    writes = sorted(r.path for r in app.routes for m in (getattr(r, "methods", None) or ()) if m in ("POST", "PUT", "PATCH", "DELETE"))
+    assert writes == ["/api/captures", "/api/captures/upload", "/api/incidents/{sid}/{action}"]
     assert c.post("/api/overview").status_code == 405
+    assert {"/api/health", "/api/overview", "/api/events"} <= {r.path for r in app.routes}
 
 
 def test_runner_refuses_non_lab_services():

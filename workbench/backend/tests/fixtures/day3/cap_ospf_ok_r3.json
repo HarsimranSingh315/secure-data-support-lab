@@ -1,0 +1,59 @@
+{
+ "args": [
+  "r3",
+  "ospf",
+  "6",
+  "none"
+ ],
+ "commands": {
+  "toolbox tshark -r /tmp/wb-an-20261020-185637-668d.pcap -n -c 5000 -T fields -E separator=/t -E occurrence=f -e frame.number -e frame.time_relative -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -e _ws.col.Protocol -e frame.len -e tcp.flags -e tcp.stream -e _ws.col.Info": [
+   {
+    "exit_code": 0,
+    "output": "1\t0.000000000\t10.0.23.22\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n2\t0.383368000\t10.0.13.11\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n3\t2.000644000\t10.0.23.22\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n4\t2.383384000\t10.0.13.11\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n5\t3.026368000\t10.0.23.22\t10.0.23.23\t\t\t\t\tOSPF\t128\t\t\tLS Update\n6\t4.000922000\t10.0.23.22\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n7\t4.383405000\t10.0.13.11\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\nRunning as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185637-668d.pcap -n -Y tcp.analysis.retransmission -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185637-668d.pcap -n -Y tcp.analysis.duplicate_ack -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185637-668d.pcap -n -Y tls.alert_message -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185637-668d.pcap -n -Y icmp.type == 3 -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185637-668d.pcap -n -Y icmp.type == 11 -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185637-668d.pcap -n -Y ospf.msg.dbdesc or tls.alert_message -T fields -E separator=/t -e frame.number -e ip.src -e ospf.db.interface_mtu -e tls.alert_message.desc": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ]
+ }
+}

@@ -8,13 +8,17 @@ import { Timeline } from "./components/Timeline";
 import { StatusDot } from "./components/StatusDot";
 import { NetworkMap } from "./pages/NetworkMap";
 import { Diagnostics, type DiagPreset } from "./pages/Diagnostics";
+import { Incidents } from "./pages/Incidents";
+import { Captures, type CapPreset } from "./pages/Captures";
 
 const AUTO_MS = 10_000;
-type Page = "overview" | "map" | "diagnostics";
+type Page = "overview" | "incidents" | "map" | "diagnostics" | "captures";
 const PAGES: { id: Page; label: string }[] = [
   { id: "overview", label: "Overview" },
+  { id: "incidents", label: "Incidents" },
   { id: "map", label: "Network map" },
   { id: "diagnostics", label: "Diagnostics" },
+  { id: "captures", label: "Captures" },
 ];
 
 function pageFromHash(): Page {
@@ -30,6 +34,7 @@ export default function App() {
   const [auto, setAuto] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
   const [preset, setPreset] = useState<DiagPreset | null>(null);
+  const [capPreset, setCapPreset] = useState<CapPreset | null>(null);
   const [, tick] = useState(0);
   const inflight = useRef<AbortController | null>(null);
 
@@ -68,6 +73,11 @@ export default function App() {
 
   const selectedCheck = data?.checks.find((c) => c.id === selected);
   const goDiagnose = (p: DiagPreset) => { setSelected(null); setPreset({ ...p, _t: Date.now() }); go("diagnostics"); };
+  const goFrom = (p: "overview" | "map" | "diagnostics" | "captures", pr?: Record<string, string | number>) => {
+    if (p === "diagnostics" && pr) return goDiagnose(pr);
+    if (p === "captures") setCapPreset(pr ? { ...pr } : null);
+    go(p);
+  };
 
   return (
     <div className="shell">
@@ -174,6 +184,8 @@ export default function App() {
 
         {page === "map" && <NetworkMap overview={data} onOpenCheck={setSelected} goDiagnose={goDiagnose} />}
         {page === "diagnostics" && <Diagnostics preset={preset} />}
+        {page === "incidents" && <Incidents go={goFrom} />}
+        {page === "captures" && <Captures preset={capPreset} />}
       </main>
 
       {selectedCheck && (

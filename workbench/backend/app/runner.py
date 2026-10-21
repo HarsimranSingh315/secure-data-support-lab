@@ -47,13 +47,15 @@ class ExecResult:
 class Runner(Protocol):
     def state(self, service: str) -> str: ...
     def exec(self, service: str, argv: list[str], timeout: int = DEFAULT_TIMEOUT,
-             env: dict[str, str] | None = None) -> ExecResult: ...
+             env: dict[str, str] | None = None, limit: int = MAX_OUTPUT) -> ExecResult: ...
+    def get_file(self, service: str, path: str, limit: int) -> bytes: ...
+    def put_file(self, service: str, path: str, data: bytes) -> None: ...
 
 
-def cap(text: str) -> tuple[str, bool]:
-    if len(text) <= MAX_OUTPUT:
+def cap(text: str, limit: int = MAX_OUTPUT) -> tuple[str, bool]:
+    if len(text) <= limit:
         return text, False
-    return text[:MAX_OUTPUT] + "\n... (output truncated)", True
+    return text[:limit] + "\n... (output truncated)", True
 
 
 class DockerRunner:
@@ -85,7 +87,7 @@ class DockerRunner:
             return "docker_unavailable"
         return ctr.status if ctr else "missing"
 
-    def exec(self, service, argv, timeout=DEFAULT_TIMEOUT, env=None) -> ExecResult:
+    def exec(self, service, argv, timeout=DEFAULT_TIMEOUT, env=None, limit=MAX_OUTPUT) -> ExecResult:
         res = ExecResult(service=service, command=list(argv), env=dict(env or {}))
         state = self.state(service)
         if state != "running":
@@ -104,7 +106,31 @@ class DockerRunner:
         finally:
             res.duration_ms = int((time.monotonic() - start) * 1000)
         res.exit_code = out.exit_code
-        res.output, res.truncated = cap((out.output or b"").decode("utf-8", "replace"))
+        res.output, res.truncated = cap((out.output or b"").decode("utf-8", "replace"), limit)
         if out.exit_code in (124, 137):  # timeout(1) exit codes
             res.error = "timeout"
         return res
+
+    # Files move through the Docker API as tar streams (the same mechanism as `docker cp`).
+    def get_file(self, service: str, path: str, limit: int) -> bytes:
+        from .captures import untar_one
+        ctr = self._find(service)
+        if ctr is None:
+            raise FileNotFoundError(service)
+        stream, stat = ctr.get_archive(path)
+        if stat.get("size", 0) > limit:
+            raise ValueError("file too large")
+        buf = bytearray()
+        for chunk in stream:
+            buf.extend(chunk)
+            if len(buf) > limit + 1024 * 1024:
+                raise ValueError("file too large")
+        return untar_one(bytes(buf), limit)
+
+    def put_file(self, service: str, path: str, data: bytes) -> None:
+        import os
+        from .captures import tar_one
+        ctr = self._find(service)
+        if ctr is None:
+            raise FileNotFoundError(service)
+        ctr.put_archive(os.path.dirname(path), tar_one(path, data))

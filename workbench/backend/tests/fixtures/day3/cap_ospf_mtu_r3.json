@@ -1,0 +1,66 @@
+{
+ "args": [
+  "r3",
+  "ospf",
+  "8",
+  "none"
+ ],
+ "commands": {
+  "toolbox tshark -r /tmp/wb-an-20261020-185559-bdfb.pcap -n -c 5000 -T fields -E separator=/t -E occurrence=f -e frame.number -e frame.time_relative -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -e _ws.col.Protocol -e frame.len -e tcp.flags -e tcp.stream -e _ws.col.Info": [
+   {
+    "exit_code": 0,
+    "output": "1\t0.000000000\t10.0.23.22\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n2\t0.054571000\t10.0.13.11\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n3\t1.997722000\t10.0.23.22\t10.0.23.23\t\t\t\t\tOSPF\t72\t\t\tDB Description\n4\t1.999972000\t10.0.23.22\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n5\t2.054578000\t10.0.13.11\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n6\t4.000805000\t10.0.23.22\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n7\t4.054665000\t10.0.13.11\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n8\t6.001739000\t10.0.23.22\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\n9\t6.055615000\t10.0.13.11\t224.0.0.5\t\t\t\t\tOSPF\t88\t\t\tHello Packet\nRunning as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185559-bdfb.pcap -n -Y tcp.analysis.retransmission -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185559-bdfb.pcap -n -Y tcp.analysis.duplicate_ack -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185559-bdfb.pcap -n -Y tls.alert_message -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185559-bdfb.pcap -n -Y icmp.type == 3 -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185559-bdfb.pcap -n -Y icmp.type == 11 -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185559-bdfb.pcap -n -Y ospf.msg.dbdesc or tls.alert_message -T fields -E separator=/t -e frame.number -e ip.src -e ospf.db.interface_mtu -e tls.alert_message.desc": [
+   {
+    "exit_code": 0,
+    "output": "3\t10.0.23.22\t1400\t\nRunning as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "r3 ip -j addr show": [
+   {
+    "exit_code": 0,
+    "output": "[{\"ifindex\":1,\"ifname\":\"lo\",\"flags\":[\"LOOPBACK\",\"UP\",\"LOWER_UP\"],\"mtu\":65536,\"qdisc\":\"noqueue\",\"operstate\":\"UNKNOWN\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"loopback\",\"address\":\"00:00:00:00:00:00\",\"broadcast\":\"00:00:00:00:00:00\",\"addr_info\":[{\"family\":\"inet\",\"local\":\"127.0.0.1\",\"prefixlen\":8,\"scope\":\"host\",\"label\":\"lo\",\"valid_life_time\":4294967295,\"preferred_life_time\":4294967295}]},{\"ifindex\":13,\"link_index\":14,\"ifname\":\"eth0\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"a6:19:b6:ff:50:63\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"link_netnsid\":0,\"addr_info\":[{\"family\":\"inet\",\"local\":\"10.20.20.2\",\"prefixlen\":24,\"scope\":\"global\",\"label\":\"eth0\",\"valid_life_time\":4294967295,\"preferred_life_time\":4294967295}]},{\"ifindex\":19,\"link_index\":20,\"ifname\":\"eth1\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"56:ed:b7:6a:66:ea\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"link_netnsid\":1,\"addr_info\":[{\"family\":\"inet\",\"local\":\"10.0.23.23\",\"prefixlen\":24,\"scope\":\"global\",\"label\":\"eth1\",\"valid_life_time\":4294967295,\"preferred_life_time\":4294967295}]},{\"ifindex\":21,\"link_index\":22,\"ifname\":\"eth2\",\"flags\":[\"BROADCAST\",\"MULTICAST\",\"UP\",\"LOWER_UP\"],\"mtu\":1500,\"qdisc\":\"noqueue\",\"operstate\":\"UP\",\"group\":\"default\",\"txqlen\":1000,\"link_type\":\"ether\",\"address\":\"16:ee:46:02:ad:ee\",\"broadcast\":\"ff:ff:ff:ff:ff:ff\",\"link_netnsid\":2,\"addr_info\":[{\"family\":\"inet\",\"local\":\"10.0.13.13\",\"prefixlen\":24,\"scope\":\"global\",\"label\":\"eth2\",\"valid_life_time\":4294967295,\"preferred_life_time\":4294967295}]}]\n",
+    "error": null
+   }
+  ]
+ }
+}

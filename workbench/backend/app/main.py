@@ -7,9 +7,18 @@ GET /api/topology   live network map: interfaces, OSPF adjacencies, routes, curr
 GET /api/diagnostics            catalog of allow-listed operations, targets and ports
 GET /api/diagnostics/{op}       run one operation (?target=db&port=5432&router=r1)
 GET /api/diagnose               guided diagnosis from Site A to one service (?target=db&port=5432)
+GET  /api/incidents             the incident library and each incident's state
+POST /api/incidents/{id}/{break|hint|fix}   run scripts/scenario.sh for one scenario
+GET  /api/incidents/{id}/runbook            the runbook (contains the answer)
+GET  /api/captures/options      capture points, filters, test traffic
+POST /api/captures              capture on a lab device and analyse it
+POST /api/captures/upload       analyse an uploaded pcap (raw body, max 10 MB)
+GET  /api/captures[/{id}[/pcap|/packets/{n}]]
 
 There is deliberately no endpoint that accepts a command, host or file path: parameters are
-names from fixed allow-lists, validated before any command is built.
+names from fixed allow-lists, validated before any command is built. Endpoints that change the
+lab (POST) also require the X-Workbench-Action header and a same-origin request, so another web
+page open in the browser cannot trigger them (CSRF).
 """
 from __future__ import annotations
 
@@ -23,16 +32,18 @@ from collections import deque
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .checks import SPECS, now, run_check
+from . import captures as cap_mod
+from . import incidents as inc_mod
 from .diagnostics import InvalidRequest, catalog, diagnose, run_op
-from .models import Check, DiagResult, Event, Overview, Topology, WizardResult
+from .models import CaptureAnalysis, CaptureMeta, Check, DiagResult, Event, Incident, Overview, Topology, WizardResult
 from .topology import collect
 from .runner import DockerRunner, Runner
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 MAX_PARALLEL_DIAG = 3          # diagnostics running at once; more get HTTP 429
 MIN_INTERVAL_S = 2.0          # overview results are reused for this long (protects the lab)
 STATIC = Path(os.environ.get("WB_STATIC", Path(__file__).resolve().parent.parent / "static"))
@@ -159,6 +170,115 @@ def create_app(runner: Runner | None = None) -> FastAPI:
     @app.get("/api/diagnose", response_model=WizardResult)
     async def guided(target: str = Query(..., max_length=16), port: int = Query(..., ge=1, le=65535)) -> WizardResult:
         return await asyncio.to_thread(limited, diagnose, monitor.runner, target, port)
+
+    # ------------------------------------------------------------- actions (change the lab)
+
+    def guard(request: Request) -> None:
+        """Only the workbench's own page may trigger actions: a custom header (which forces a CORS
+        preflight that this server never approves) and, when the browser sends one, a same-origin
+        Origin header."""
+        from urllib.parse import urlparse
+        if request.headers.get("x-workbench-action") != "1":
+            raise HTTPException(403, "missing X-Workbench-Action header")
+        origin = request.headers.get("origin")
+        if origin and urlparse(origin).netloc != request.headers.get("host"):
+            raise HTTPException(403, "cross-origin request refused")
+        if request.headers.get("sec-fetch-site") not in (None, "same-origin", "none"):
+            raise HTTPException(403, "cross-site request refused")
+
+    def invalidate() -> None:
+        monitor._cache = None
+        topo_cache["value"] = None
+
+    def inc_call(fn, *args):
+        try:
+            return fn(*args)
+        except inc_mod.IncidentError as exc:
+            raise HTTPException(exc.status, str(exc)) from None
+
+    @app.get("/api/incidents", response_model=list[Incident])
+    def incidents_list() -> list[Incident]:
+        return inc_mod.list_incidents()
+
+    @app.get("/api/incidents/{sid}", response_model=Incident)
+    def incident_get(sid: str) -> Incident:
+        return inc_call(inc_mod.get, sid)
+
+    @app.get("/api/incidents/{sid}/runbook")
+    def incident_runbook(sid: str) -> dict:
+        return {"id": sid, "markdown": inc_call(inc_mod.runbook, sid)}
+
+    @app.post("/api/incidents/{sid}/{action}", response_model=Incident)
+    async def incident_action(sid: str, action: str, request: Request) -> Incident:
+        guard(request)
+        if action == "clear":
+            return inc_call(inc_mod.reset_record, sid)
+        try:
+            return await asyncio.to_thread(inc_call, inc_mod.act, sid, action)
+        finally:
+            invalidate()
+
+    @app.get("/api/actions")
+    def actions() -> list[dict]:
+        return inc_mod.recent_actions()
+
+    # ------------------------------------------------------------- captures
+
+    def cap_call(fn, *args):
+        try:
+            return fn(*args)
+        except cap_mod.CaptureError as exc:
+            raise HTTPException(400, str(exc)) from None
+        except FileNotFoundError:
+            raise HTTPException(404, "no such capture") from None
+
+    @app.get("/api/captures/options")
+    def capture_options() -> dict:
+        return {"points": [{"id": k, "label": v[0]} for k, v in cap_mod.POINTS.items()],
+                "filters": [{"id": k, "label": v[0], "bpf": " ".join(v[1])} for k, v in cap_mod.FILTERS.items()],
+                "traffic": [{"id": k, "label": v} for k, v in cap_mod.TRAFFIC.items()],
+                "seconds": {"min": 3, "max": 30, "default": 8}}
+
+    @app.get("/api/captures", response_model=list[CaptureMeta])
+    def captures_list() -> list[CaptureMeta]:
+        return cap_mod.list_captures()
+
+    @app.post("/api/captures", response_model=CaptureAnalysis)
+    async def capture_run(request: Request) -> CaptureAnalysis:
+        guard(request)
+        try:
+            body = await request.json()
+            point, flt = str(body["point"]), str(body["filter"])
+            seconds, traffic = int(body.get("seconds", 8)), str(body.get("traffic", "none"))
+        except (ValueError, KeyError, TypeError):
+            raise HTTPException(400, "expected JSON: point, filter, seconds, traffic") from None
+        return await asyncio.to_thread(cap_call, cap_mod.capture, monitor.runner, point, flt, seconds, traffic)
+
+    @app.post("/api/captures/upload", response_model=CaptureAnalysis)
+    async def capture_upload(request: Request, filename: str = Query("upload.pcap", max_length=120)) -> CaptureAnalysis:
+        guard(request)
+        if int(request.headers.get("content-length") or 0) > cap_mod.MAX_FILE:
+            raise HTTPException(413, "file too large (max 10 MB)")
+        raw = b""
+        async for chunk in request.stream():
+            raw += chunk
+            if len(raw) > cap_mod.MAX_FILE:
+                raise HTTPException(413, "file too large (max 10 MB)")
+        return await asyncio.to_thread(cap_call, cap_mod.upload, monitor.runner, raw, filename)
+
+    @app.get("/api/captures/{cid}", response_model=CaptureAnalysis)
+    def capture_get(cid: str) -> CaptureAnalysis:
+        return cap_call(cap_mod.load, cid)
+
+    @app.get("/api/captures/{cid}/pcap")
+    def capture_pcap(cid: str) -> Response:
+        data = cap_call(cap_mod.pcap_bytes, cid)
+        return Response(data, media_type="application/vnd.tcpdump.pcap",
+                        headers={"Content-Disposition": f'attachment; filename="lab-{cid}.pcap"'})
+
+    @app.get("/api/captures/{cid}/packets/{no}")
+    async def capture_packet(cid: str, no: int) -> dict:
+        return await asyncio.to_thread(cap_call, cap_mod.packet_detail, monitor.runner, cid, no)
 
     @app.exception_handler(Exception)
     async def unexpected(_: Request, exc: Exception):

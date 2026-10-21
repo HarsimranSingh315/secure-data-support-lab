@@ -1,0 +1,112 @@
+Frame 20: 79 bytes on wire (632 bits), 79 bytes captured (632 bits)
+    Encapsulation type: Linux cooked-mode capture v2 (210)
+    Arrival Time: Oct 20, 2026 18:57:30.488720000 MDT
+    UTC Arrival Time: Oct 21, 2026 00:57:30.488720000 UTC
+    Epoch Arrival Time: 1792544250.488720000
+    [Time shift for this packet: 0.000000000 seconds]
+    [Time delta from previous captured frame: 0.000955000 seconds]
+    [Time delta from previous displayed frame: 0.000000000 seconds]
+    [Time since reference or first frame: 0.015991000 seconds]
+    Frame Number: 20
+    Frame Length: 79 bytes (632 bits)
+    Capture Length: 79 bytes (632 bits)
+    [Frame is marked: False]
+    [Frame is ignored: False]
+    [Protocols in frame: sll:ethertype:ip:tcp:tls]
+Linux cooked capture v2
+    Protocol: IPv4 (0x0800)
+    Interface index: 7
+    Link-layer address type: Ethernet (1)
+    Packet type: Sent by us (4)
+    Link-layer address length: 6
+    Source: 32:68:ae:fc:37:22
+    Unused: 0000
+Internet Protocol Version 4, Src: 10.10.10.10, Dst: 10.20.20.10
+    0100 .... = Version: 4
+    .... 0101 = Header Length: 20 bytes (5)
+    Differentiated Services Field: 0x00 (DSCP: CS0, ECN: Not-ECT)
+        0000 00.. = Differentiated Services Codepoint: Default (0)
+        .... ..00 = Explicit Congestion Notification: Not ECN-Capable Transport (0)
+    Total Length: 59
+    Identification: 0x9813 (38931)
+    010. .... = Flags: 0x2, Don't fragment
+        0... .... = Reserved bit: Not set
+        .1.. .... = Don't fragment: Set
+        ..0. .... = More fragments: Not set
+    ...0 0000 0000 0000 = Fragment Offset: 0
+    Time to Live: 64
+    Protocol: TCP (6)
+    Header Checksum: 0x7078 [validation disabled]
+    [Header checksum status: Unverified]
+    Source Address: 10.10.10.10
+    Destination Address: 10.20.20.10
+Transmission Control Protocol, Src Port: 40258, Dst Port: 5432, Seq: 678, Ack: 3053, Len: 7
+    Source Port: 40258
+    Destination Port: 5432
+    [Stream index: 1]
+    [Conversation completeness: Incomplete, DATA (15)]
+        ..0. .... = RST: Absent
+        ...0 .... = FIN: Absent
+        .... 1... = Data: Present
+        .... .1.. = ACK: Present
+        .... ..1. = SYN-ACK: Present
+        .... ...1 = SYN: Present
+        [Completeness Flags: ··DASS]
+    [TCP Segment Len: 7]
+    Sequence Number: 678    (relative sequence number)
+    Sequence Number (raw): 3537827193
+    [Next Sequence Number: 685    (relative sequence number)]
+    Acknowledgment Number: 3053    (relative ack number)
+    Acknowledgment number (raw): 863198591
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+        000. .... .... = Reserved: Not set
+        ...0 .... .... = Accurate ECN: Not set
+        .... 0... .... = Congestion Window Reduced: Not set
+        .... .0.. .... = ECN-Echo: Not set
+        .... ..0. .... = Urgent: Not set
+        .... ...1 .... = Acknowledgment: Set
+        .... .... 1... = Push: Set
+        .... .... .0.. = Reset: Not set
+        .... .... ..0. = Syn: Not set
+        .... .... ...0 = Fin: Not set
+        [TCP Flags: ·······AP···]
+    Window: 69
+    [Calculated window size: 70656]
+    [Window size scaling factor: 1024]
+    Checksum: 0x325f [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+        TCP Option - No-Operation (NOP)
+            Kind: No-Operation (1)
+        TCP Option - No-Operation (NOP)
+            Kind: No-Operation (1)
+        TCP Option - Timestamps
+            Kind: Time Stamp Option (8)
+            Length: 10
+            Timestamp value: 1160651212: TSval 1160651212, TSecr 3067943338
+            Timestamp echo reply: 3067943338
+    [Timestamps]
+        [Time since first frame in this TCP stream: 0.004427000 seconds]
+        [Time since previous frame in this TCP stream: 0.000955000 seconds]
+    [SEQ/ACK analysis]
+        [iRTT: 0.000378000 seconds]
+        [Bytes in flight: 7]
+        [Bytes sent since last PSH flag: 7]
+    TCP payload (7 bytes)
+Transport Layer Security
+    TLSv1.3 Record Layer: Alert (Level: Fatal, Description: Bad Certificate)
+        Content Type: Alert (21)
+        Version: TLS 1.2 (0x0303)
+        Length: 2
+        Alert Message
+            Level: Fatal (2)
+            Description: Bad Certificate (42)
+
+0000  08 00 00 00 00 00 00 07 00 01 04 06 32 68 ae fc   ............2h..
+0010  37 22 00 00 45 00 00 3b 98 13 40 00 40 06 70 78   7"..E..;..@.@.px
+0020  0a 0a 0a 0a 0a 14 14 0a 9d 42 15 38 d2 de f5 79   .........B.8...y
+0030  33 73 5d 7f 80 18 00 45 32 5f 00 00 01 01 08 0a   3s]....E2_......
+0040  45 2e 21 cc b6 dd 19 aa 15 03 03 00 02 02 2a      E.!...........*
+

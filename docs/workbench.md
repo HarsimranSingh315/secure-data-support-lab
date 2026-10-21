@@ -86,6 +86,36 @@ site, nothing listening: shows **refused**). Run both and compare.
 Traceroute retries once when the destination stays silent: Linux rate-limits ICMP error replies,
 so a final `*` does not always mean the host is unreachable.
 
+## Incidents (status: implemented, tested)
+
+The nine scenarios, each with **Start incident**, **Show a hint** and **Fix and close**. The buttons
+run the lab's own `scripts/scenario.sh` (the same as `make break S=...`), so the terminal and the
+workbench always do exactly the same thing.
+
+- Before you start: a neutral title (the symptom), never the cause.
+- Started: the customer's ticket (ID, priority, their words), a timer, links to the tools for that
+  area, a notes box (kept in your browser) and the hint.
+- Fixed: what was actually broken, time to resolve (a lab metric), your notes next to the runbook.
+- Every Break/Hint/Fix is recorded in `.workbench/actions.jsonl` and shown in the action log.
+- Only one action runs at a time; breaking an incident that is already active is refused.
+
+## Packet captures (status: implemented, tested)
+
+Capture on r1, r2, r3 or the toolbox with a fixed filter (PostgreSQL, app, KMS, LDAP, ICMP, OSPF,
+traceroute) for 3-30 s, optionally generating test traffic from the toolbox at the same time. Or
+upload a `.pcap` (max 10 MB). The workbench decodes it with tshark in the toolbox and shows:
+
+- **Findings**: unanswered SYNs (dropped), SYN→RST (refused), completed handshakes,
+  retransmissions, TLS alerts (with who sent them), ICMP unreachable, and for OSPF the MTU each
+  neighbour advertises in its Database Description packets next to the capturing interface's MTU.
+- **TCP conversations** with state, and a **ladder diagram** of the selected one.
+- **Packets**: filterable table (address, port, protocol, text), flagged rows, and full
+  `tshark -V -x` decode with hex for any packet.
+- **Download .pcap** to open in Wireshark.
+
+Routers capture with `-Q in` so a forwarded packet is counted once, not on both interfaces.
+Snap length is 256 bytes: headers and handshakes, not bulk data.
+
 ## How it works
 
 ```
@@ -100,10 +130,22 @@ app) run from the toolbox in Site A, so they cross r1, r2, r3 and the firewall e
 
 ## Threat model and controls
 
-Mounting the Docker socket gives a container root-equivalent control of Docker. That is accepted
-here only because this is a local, single-user lab, and it is contained by:
+Mounting the Docker socket gives a container root-equivalent control of Docker, and since Day 3
+the workbench also has the repository mounted (read-write) and the Docker CLI, so that Break/Fix
+can run `scripts/scenario.sh`. That is accepted only because this is a local, single-user lab, and
+it is contained by:
 
-- **No command input.** Every endpoint is a read-only GET. Commands are fixed argument lists in
+- **Lab changes need a same-origin request.** The five POST endpoints (incident actions, start a
+  capture, upload a capture) require an `X-Workbench-Action: 1` header, which another website cannot
+  send without a CORS preflight this server never approves, and are refused when `Origin` or
+  `Sec-Fetch-Site` show a cross-site request. This stops a malicious page in the same browser from
+  breaking the lab (CSRF). Tested.
+- **Fixed actions only.** Incident IDs, actions, capture points, filters, durations and traffic
+  options are checked against allow-lists before anything runs; values are passed as separate
+  arguments. Uploaded files are size- and magic-byte-checked and decoded by tshark inside the
+  toolbox container, never by the workbench process.
+
+- **No command input.** Apart from the guarded actions above, every endpoint is a read-only GET. Commands are fixed argument lists in
   `backend/app/checks.py`, `diagnostics.py` and `topology.py`. Diagnostics take only names from
   allow-lists (a target, a port that target defines, a router); anything else gets HTTP 400 before
   a command is built. Values reach `bash -c` scripts as separate arguments (`$0`, `$1`), never as
@@ -126,10 +168,21 @@ here only because this is a local, single-user lab, and it is contained by:
 - **No secrets shown.** Checks read status, never keys or passwords. The KMS card shows seal
   state and version, never the unseal key or tokens.
 
-Not yet in place (planned): sign-in for the UI, persistent history (events reset when the
-workbench restarts), and actions such as Break/Fix, which will need their own validation.
+Not yet in place (planned): sign-in for the UI (today, anyone who can reach 127.0.0.1:9443 on the
+Mac can use it), and persistent status history (the Overview timeline resets when the workbench
+restarts; incident state, actions and captures are kept in `.workbench/`).
 
 ## Tests (actually run)
+
+Day 3 (`tests/test_day3.py`, 29 tests): the incident tests run the repository's **real**
+`scripts/scenario.sh` with only `docker compose` replaced by a stub that records each call, and
+check the ticket parsing, hints, refusals, reveal-after-fix, failure handling and the action log.
+The capture tests replay **real captures** from the namespace replica (healthy, firewall drop at
+r3 and at the client, refused, ping, unreachable, wrong-name TLS, OSPF MTU mismatch from both
+sides, healthy OSPF) and the exact tshark output for them. The API tests cover the CSRF guard.
+Before packaging, the whole flow ran in a browser against the replica: Start incident → ticket →
+capture on r3 (SYNs retransmitted, no SYN-ACK) → hint → Fix → cause revealed and runbook shown.
+Frontend: 10 tests including the runbook renderer (built from React elements, never raw HTML).
 
 Day 2 (`tests/test_day2.py`, 38 tests): the network map and the guided diagnosis replay **real
 recorded sessions** from a network-namespace replica of the lab (the repo's own router templates,

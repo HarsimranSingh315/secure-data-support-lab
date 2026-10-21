@@ -6,8 +6,15 @@ RUN npm ci --no-audit --no-fund
 COPY workbench/frontend/ ./
 RUN npm run build
 
+FROM docker:27.3.1-cli AS dockercli
+
 FROM python:3.12-slim
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 WB_STATIC=/srv/static
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 WB_STATIC=/srv/static \
+    HOME=/tmp DOCKER_CONFIG=/tmp/.docker
+# Docker CLI + compose plugin: the Incidents page runs the lab's own scripts/scenario.sh, which
+# drives the lab with `docker compose exec`, exactly as when you run `make break` on the Mac.
+COPY --from=dockercli /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=dockercli /usr/local/libexec/docker/cli-plugins/docker-compose /usr/local/libexec/docker/cli-plugins/docker-compose
 COPY workbench/backend/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY workbench/backend/app /srv/app

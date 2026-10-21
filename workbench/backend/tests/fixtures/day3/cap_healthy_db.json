@@ -1,0 +1,59 @@
+{
+ "args": [
+  "r3",
+  "db",
+  "5",
+  "db"
+ ],
+ "commands": {
+  "toolbox tshark -r /tmp/wb-an-20261020-185631-cb71.pcap -n -c 5000 -T fields -E separator=/t -E occurrence=f -e frame.number -e frame.time_relative -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -e _ws.col.Protocol -e frame.len -e tcp.flags -e tcp.stream -e _ws.col.Info": [
+   {
+    "exit_code": 0,
+    "output": "1\t0.000000000\t10.10.10.10\t10.20.20.10\t49612\t5432\t\t\tTCP\t80\t0x0002\t0\t49612 \u2192 5432 [SYN] Seq=0 Win=64240 Len=0 MSS=1460 SACK_PERM TSval=366933214 TSecr=0 WS=1024\n2\t0.000391000\t10.20.20.10\t10.10.10.10\t5432\t49612\t\t\tTCP\t80\t0x0012\t0\t5432 \u2192 49612 [SYN, ACK] Seq=0 Ack=1 Win=65160 Len=0 MSS=1460 SACK_PERM TSval=1586287667 TSecr=366933214 WS=1024\n3\t0.000426000\t10.10.10.10\t10.20.20.10\t49612\t5432\t\t\tTCP\t72\t0x0010\t0\t49612 \u2192 5432 [ACK] Seq=1 Ack=1 Win=64512 Len=0 TSval=366933214 TSecr=1586287667\n4\t0.000628000\t10.10.10.10\t10.20.20.10\t49612\t5432\t\t\tTCP\t72\t0x0011\t0\t49612 \u2192 5432 [FIN, ACK] Seq=1 Ack=1 Win=64512 Len=0 TSval=366933215 TSecr=1586287667\n5\t0.001618000\t10.20.20.10\t10.10.10.10\t5432\t49612\t\t\tTCP\t72\t0x0010\t0\t5432 \u2192 49612 [ACK] Seq=1 Ack=2 Win=65536 Len=0 TSval=1586287669 TSecr=366933215\n6\t0.003366000\t10.20.20.10\t10.10.10.10\t5432\t49612\t\t\tTCP\t72\t0x0011\t0\t5432 \u2192 49612 [FIN, ACK] Seq=1 Ack=2 Win=65536 Len=0 TSval=1586287670 TSecr=366933215\n7\t0.003403000\t10.10.10.10\t10.20.20.10\t49612\t5432\t\t\tTCP\t72\t0x0010\t0\t49612 \u2192 5432 [ACK] Seq=2 Ack=2 Win=64512 Len=0 TSval=366933217 TSecr=1586287670\n8\t0.011001000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tTCP\t80\t0x0002\t1\t49624 \u2192 5432 [SYN] Seq=0 Win=64240 Len=0 MSS=1460 SACK_PERM TSval=3270123580 TSecr=0 WS=1024\n9\t0.011339000\t10.20.20.10\t10.10.10.10\t5432\t49624\t\t\tTCP\t80\t0x0012\t1\t5432 \u2192 49624 [SYN, ACK] Seq=0 Ack=1 Win=65160 Len=0 MSS=1460 SACK_PERM TSval=3894967245 TSecr=3270123580 WS=1024\n10\t0.011356000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tTCP\t72\t0x0010\t1\t49624 \u2192 5432 [ACK] Seq=1 Ack=1 Win=64512 Len=0 TSval=3270123580 TSecr=3894967245\n11\t0.011823000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tPGSQL\t80\t0x0018\t1\t>?\n12\t0.011832000\t10.20.20.10\t10.10.10.10\t5432\t49624\t\t\tTCP\t72\t0x0010\t1\t5432 \u2192 49624 [ACK] Seq=1 Ack=9 Win=65536 Len=0 TSval=3894967246 TSecr=3270123581\n13\t0.012167000\t10.20.20.10\t10.10.10.10\t5432\t49624\t\t\tPGSQL\t73\t0x0018\t1\t<\n14\t0.012245000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tTCP\t72\t0x0010\t1\t49624 \u2192 5432 [ACK] Seq=9 Ack=2 Win=64512 Len=0 TSval=3270123581 TSecr=3894967246\n15\t0.012422000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tTLSv1\t387\t0x0018\t1\tClient Hello (SNI=db.site-b.lab)[Packet size limited during capture]\n16\t0.012655000\t10.20.20.10\t10.10.10.10\t5432\t49624\t\t\tTLSv1.3\t171\t0x0018\t1\tHello Retry Request, Change Cipher Spec\n17\t0.012884000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tTLSv1.3\t426\t0x0018\t1\tChange Cipher Spec, Client Hello (SNI=db.site-b.lab)[Packet size limited during capture]\n18\t0.014346000\t10.20.20.10\t10.10.10.10\t5432\t49624\t\t\tTLSv1.3\t3026\t0x0018\t1\tServer Hello, Application Data[Packet size limited during capture]\n19\t0.014376000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tTCP\t72\t0x0010\t1\t49624 \u2192 5432 [ACK] Seq=678 Ack=3055 Win=70656 Len=0 TSval=3270123583 TSecr=3894967248\n20\t0.015445000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tTLSv1.3\t146\t0x0018\t1\tApplication Data\n21\t0.015570000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tTLSv1.3\t96\t0x0018\t1\tApplication Data\n22\t0.015582000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tTCP\t72\t0x0011\t1\t49624 \u2192 5432 [FIN, ACK] Seq=776 Ack=3055 Win=70656 Len=0 TSval=3270123584 TSecr=3894967248\n23\t0.015589000\t10.20.20.10\t10.10.10.10\t5432\t49624\t\t\tTCP\t72\t0x0010\t1\t5432 \u2192 49624 [ACK] Seq=3055 Ack=776 Win=65536 Len=0 TSval=3894967249 TSecr=3270123584\n24\t0.015626000\t10.20.20.10\t10.10.10.10\t5432\t49624\t\t\tTLSv1.3\t96\t0x0018\t1\tApplication Data\n25\t0.017086000\t10.20.20.10\t10.10.10.10\t5432\t49624\t\t\tTCP\t72\t0x0011\t1\t5432 \u2192 49624 [FIN, ACK] Seq=3079 Ack=777 Win=65536 Len=0 TSval=3894967251 TSecr=3270123584\n26\t0.017125000\t10.10.10.10\t10.20.20.10\t49624\t5432\t\t\tTCP\t72\t0x0010\t1\t49624 \u2192 5432 [ACK] Seq=777 Ack=3080 Win=70656 Len=0 TSval=3270123586 TSecr=3894967250\n27\t0.042298000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tTCP\t80\t0x0002\t2\t49630 \u2192 5432 [SYN] Seq=0 Win=64240 Len=0 MSS=1460 SACK_PERM TSval=174145903 TSecr=0 WS=1024\n28\t0.042525000\t10.20.20.10\t10.10.10.10\t5432\t49630\t\t\tTCP\t80\t0x0012\t2\t5432 \u2192 49630 [SYN, ACK] Seq=0 Ack=1 Win=65160 Len=0 MSS=1460 SACK_PERM TSval=278482968 TSecr=174145903 WS=1024\n29\t0.042541000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tTCP\t72\t0x0010\t2\t49630 \u2192 5432 [ACK] Seq=1 Ack=1 Win=64512 Len=0 TSval=174145903 TSecr=278482968\n30\t0.042571000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tPGSQL\t80\t0x0018\t2\t>?\n31\t0.042577000\t10.20.20.10\t10.10.10.10\t5432\t49630\t\t\tTCP\t72\t0x0010\t2\t5432 \u2192 49630 [ACK] Seq=1 Ack=9 Win=65536 Len=0 TSval=278482968 TSecr=174145903\n32\t0.043353000\t10.20.20.10\t10.10.10.10\t5432\t49630\t\t\tPGSQL\t73\t0x0018\t2\t<\n33\t0.043385000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tTCP\t72\t0x0010\t2\t49630 \u2192 5432 [ACK] Seq=9 Ack=2 Win=64512 Len=0 TSval=174145904 TSecr=278482969\n34\t0.043607000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tTLSv1\t387\t0x0018\t2\tClient Hello (SNI=db.site-b.lab)[Packet size limited during capture]\n35\t0.043833000\t10.20.20.10\t10.10.10.10\t5432\t49630\t\t\tTLSv1.3\t171\t0x0018\t2\tHello Retry Request, Change Cipher Spec\n36\t0.044011000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tTLSv1.3\t426\t0x0018\t2\tChange Cipher Spec, Client Hello (SNI=db.site-b.lab)[Packet size limited during capture]\n37\t0.045452000\t10.20.20.10\t10.10.10.10\t5432\t49630\t\t\tTLSv1.3\t3026\t0x0018\t2\tServer Hello, Application Data[Packet size limited during capture]\n38\t0.045486000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tTCP\t72\t0x0010\t2\t49630 \u2192 5432 [ACK] Seq=678 Ack=3055 Win=70656 Len=0 TSval=174145906 TSecr=278482971\n39\t0.046711000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tTLSv1.3\t146\t0x0018\t2\tApplication Data\n40\t0.046829000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tTLSv1.3\t96\t0x0018\t2\tApplication Data\n41\t0.046842000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tTCP\t72\t0x0011\t2\t49630 \u2192 5432 [FIN, ACK] Seq=776 Ack=3055 Win=70656 Len=0 TSval=174145908 TSecr=278482971\n42\t0.046843000\t10.20.20.10\t10.10.10.10\t5432\t49630\t\t\tTCP\t72\t0x0010\t2\t5432 \u2192 49630 [ACK] Seq=3055 Ack=776 Win=65536 Len=0 TSval=278482973 TSecr=174145908\n43\t0.046882000\t10.20.20.10\t10.10.10.10\t5432\t49630\t\t\tTLSv1.3\t96\t0x0018\t2\tApplication Data\n44\t0.048352000\t10.20.20.10\t10.10.10.10\t5432\t49630\t\t\tTCP\t72\t0x0011\t2\t5432 \u2192 49630 [FIN, ACK] Seq=3079 Ack=777 Win=65536 Len=0 TSval=278482974 TSecr=174145908\n45\t0.048384000\t10.10.10.10\t10.20.20.10\t49630\t5432\t\t\tTCP\t72\t0x0010\t2\t49630 \u2192 5432 [ACK] Seq=777 Ack=3080 Win=70656 Len=0 TSval=174145909 TSecr=278482973\nRunning as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185631-cb71.pcap -n -Y tcp.analysis.retransmission -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185631-cb71.pcap -n -Y tcp.analysis.duplicate_ack -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185631-cb71.pcap -n -Y tls.alert_message -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185631-cb71.pcap -n -Y icmp.type == 3 -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185631-cb71.pcap -n -Y icmp.type == 11 -T fields -e frame.number": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ],
+  "toolbox tshark -r /tmp/wb-an-20261020-185631-cb71.pcap -n -Y ospf.msg.dbdesc or tls.alert_message -T fields -E separator=/t -e frame.number -e ip.src -e ospf.db.interface_mtu -e tls.alert_message.desc": [
+   {
+    "exit_code": 0,
+    "output": "Running as user \"root\" and group \"root\". This could be dangerous.\n",
+    "error": null
+   }
+  ]
+ }
+}
