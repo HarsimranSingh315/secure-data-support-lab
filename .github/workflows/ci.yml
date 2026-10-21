@@ -19,6 +19,10 @@ jobs:
         run: |
           python3 -m pip install --quiet -r workbench/backend/requirements-dev.txt
           cd workbench/backend && python3 -m pytest -q tests
+      - name: Import as the container does (code at /srv/app)
+        run: |
+          sudo mkdir -p /srv && sudo cp -r workbench/backend/app /srv/app
+          cd /srv && WB_REPO="$GITHUB_WORKSPACE" WB_STATIC=/nonexistent python3 -c "import app.main; assert app.main.app"
       - name: PKI builds a valid chain
         run: |
           CERTS_DIR=$RUNNER_TEMP/certs ./scripts/pki.sh init

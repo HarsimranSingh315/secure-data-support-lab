@@ -327,3 +327,12 @@ def test_capture_api_flow(api):
     assert api.get("/api/captures/20990101-000000-abcd").status_code == 404
     up = api.post("/api/captures/upload?filename=x.pcap", content=b"nope", headers=H)
     assert up.status_code == 400
+
+
+def test_repo_fallback_handles_the_shallow_container_path():
+    """Regression for the Day 3 crash: in the container the code is at /srv/app/incidents.py, which
+    has no parents[3]. The real import at that path is checked in CI ('Import as the container does')."""
+    assert I.default_repo(Path("/srv/app/incidents.py")) == Path.cwd()
+    assert I.default_repo(REPO / "workbench" / "backend" / "app" / "incidents.py") == REPO
+    src = Path(I.__file__).read_text()
+    assert 'environ.get("WB_REPO", Path(' not in src     # eager default must not come back

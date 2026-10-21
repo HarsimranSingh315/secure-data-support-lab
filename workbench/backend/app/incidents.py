@@ -18,7 +18,15 @@ from pathlib import Path
 
 from .models import Incident, IncidentRun
 
-REPO = Path(os.environ.get("WB_REPO", Path(__file__).resolve().parents[3]))
+def default_repo(here: Path | None = None) -> Path:
+    """The repository root when WB_REPO is not set: three levels above this file in a checkout.
+    In the container the code lives at /srv/app (too shallow), so fall back to the current dir.
+    (Never compute this as a .get() default: Python evaluates defaults even when the variable is set.)"""
+    here = (here or Path(__file__)).resolve()
+    return here.parents[3] if len(here.parents) > 3 else Path.cwd()
+
+
+REPO = Path(os.environ["WB_REPO"]) if os.environ.get("WB_REPO") else default_repo()
 DATA = Path(os.environ.get("WB_DATA", "/tmp/wb-data"))
 TIMEOUT_S = 180
 
