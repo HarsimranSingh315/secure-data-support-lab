@@ -36,11 +36,18 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+SECRET_ENV = re.compile(r"PASS|SECRET|TOKEN|KEY", re.I)
+
+
 def evidence(r: ExecResult) -> Evidence:
+    """What ran, for display. Secret-looking environment values are never shown."""
     cmd = shlex.join(r.command)
-    if r.env:
-        cmd = " ".join(f"{k}={shlex.quote(v)}" for k, v in r.env.items()) + " " + cmd
-    envs = "".join(f"-e {k}={shlex.quote(v)} " for k, v in r.env.items())
+    env = {k: ("***" if SECRET_ENV.search(k) else v) for k, v in r.env.items()}
+    if env:
+        cmd = " ".join(f"{k}={shlex.quote(v)}" for k, v in env.items()) + " " + cmd
+    envs = "".join(f"-e {k}={shlex.quote(v)} " for k, v in env.items())
+    if getattr(r, "user", None):
+        envs = f"-u {r.user} " + envs
     repro = f"docker compose exec {envs}{r.service} {shlex.join(r.command)}"
     shown, cut = cap(r.output)
     return Evidence(service=r.service, command=cmd, repro=repro, exit_code=r.exit_code, output=shown,

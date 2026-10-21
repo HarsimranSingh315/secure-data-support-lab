@@ -80,6 +80,10 @@ Lab users (directory passwords, lab only): `alice` / `Lab-alice-2026!` (DBA), `b
   the customer's ticket, a timer, notes, and the root cause revealed only after the fix.
 - **Captures**: tcpdump on any router or the client, decoded with tshark: findings (unanswered SYNs,
   resets, TLS alerts, OSPF MTU), TCP ladder diagrams, packet details, .pcap download.
+- **Identity & DB**: directory users and groups, real login tests (LDAP bind, database login via
+  LDAP), and who can read what in PostgreSQL, down to the role each permission comes from.
+- **Audit & alerts**: activity-monitor alerts explained and triaged, with the audit events behind
+  each one, and a search over the pgAudit trail.
 
 Break something with `make break` and find the cause in the UI. Details, threat model and tests: [docs/workbench.md](docs/workbench.md).
 

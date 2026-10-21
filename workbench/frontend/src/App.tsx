@@ -10,15 +10,19 @@ import { NetworkMap } from "./pages/NetworkMap";
 import { Diagnostics, type DiagPreset } from "./pages/Diagnostics";
 import { Incidents } from "./pages/Incidents";
 import { Captures, type CapPreset } from "./pages/Captures";
+import { IdentityDb } from "./pages/IdentityDb";
+import { AuditAlerts } from "./pages/AuditAlerts";
 
 const AUTO_MS = 10_000;
-type Page = "overview" | "incidents" | "map" | "diagnostics" | "captures";
+type Page = "overview" | "incidents" | "map" | "diagnostics" | "captures" | "identity" | "audit";
 const PAGES: { id: Page; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "incidents", label: "Incidents" },
   { id: "map", label: "Network map" },
   { id: "diagnostics", label: "Diagnostics" },
   { id: "captures", label: "Captures" },
+  { id: "identity", label: "Identity & DB" },
+  { id: "audit", label: "Audit & alerts" },
 ];
 
 function pageFromHash(): Page {
@@ -73,7 +77,7 @@ export default function App() {
 
   const selectedCheck = data?.checks.find((c) => c.id === selected);
   const goDiagnose = (p: DiagPreset) => { setSelected(null); setPreset({ ...p, _t: Date.now() }); go("diagnostics"); };
-  const goFrom = (p: "overview" | "map" | "diagnostics" | "captures", pr?: Record<string, string | number>) => {
+  const goFrom = (p: "overview" | "map" | "diagnostics" | "captures" | "identity" | "audit", pr?: Record<string, string | number>) => {
     if (p === "diagnostics" && pr) return goDiagnose(pr);
     if (p === "captures") setCapPreset(pr ? { ...pr } : null);
     go(p);
@@ -186,6 +190,8 @@ export default function App() {
         {page === "diagnostics" && <Diagnostics preset={preset} />}
         {page === "incidents" && <Incidents go={goFrom} />}
         {page === "captures" && <Captures preset={capPreset} />}
+        {page === "identity" && <IdentityDb />}
+        {page === "audit" && <AuditAlerts />}
       </main>
 
       {selectedCheck && (

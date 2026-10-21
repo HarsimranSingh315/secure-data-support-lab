@@ -34,6 +34,7 @@ class ExecResult:
     error: str | None = None
     truncated: bool = False
     env: dict[str, str] = field(default_factory=dict)
+    user: str | None = None
 
     @property
     def ran(self) -> bool:
@@ -47,7 +48,7 @@ class ExecResult:
 class Runner(Protocol):
     def state(self, service: str) -> str: ...
     def exec(self, service: str, argv: list[str], timeout: int = DEFAULT_TIMEOUT,
-             env: dict[str, str] | None = None, limit: int = MAX_OUTPUT) -> ExecResult: ...
+             env: dict[str, str] | None = None, limit: int = MAX_OUTPUT, user: str | None = None) -> ExecResult: ...
     def get_file(self, service: str, path: str, limit: int) -> bytes: ...
     def put_file(self, service: str, path: str, data: bytes) -> None: ...
 
@@ -87,8 +88,8 @@ class DockerRunner:
             return "docker_unavailable"
         return ctr.status if ctr else "missing"
 
-    def exec(self, service, argv, timeout=DEFAULT_TIMEOUT, env=None, limit=MAX_OUTPUT) -> ExecResult:
-        res = ExecResult(service=service, command=list(argv), env=dict(env or {}))
+    def exec(self, service, argv, timeout=DEFAULT_TIMEOUT, env=None, limit=MAX_OUTPUT, user=None) -> ExecResult:
+        res = ExecResult(service=service, command=list(argv), env=dict(env or {}), user=user)
         state = self.state(service)
         if state != "running":
             res.error = {"docker_unavailable": "docker_unavailable",
@@ -98,7 +99,8 @@ class DockerRunner:
         try:
             ctr = self._find(service)
             out = ctr.exec_run(["timeout", "-s", "KILL", str(timeout), *argv],
-                               environment=env or {}, stdout=True, stderr=True, demux=False)
+                               environment=env or {}, stdout=True, stderr=True, demux=False,
+                               user=user or "")
         except self._docker.errors.DockerException as exc:
             res.error = "docker_unavailable"
             res.output = str(exc)[:500]

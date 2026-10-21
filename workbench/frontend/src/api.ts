@@ -182,3 +182,44 @@ export async function uploadCapture(file: File): Promise<CaptureAnalysis> {
   }
   return (await res.json()) as CaptureAnalysis;
 }
+
+// ---------------------------------------------------------------- identity, database, audit, alerts
+export interface DirUser { dn: string; uid: string; cn: string; mail: string; uid_number: string; home: string; groups: string[]; has_password: boolean }
+export interface DirGroup { dn: string; cn: string; gid: string; members: string[] }
+export interface Directory { base_dn: string; users: DirUser[]; groups: DirGroup[]; ous: string[]; entries: number; evidence: Evidence[]; read_at: string }
+export interface LoginTest { kind: "ldap" | "db"; user: string; mode: string; status: "pass" | "fail"; summary: string; meaning: string; evidence: Evidence[]; ran_at: string }
+export interface DbRole { name: string; login: boolean; superuser: boolean; member_of: string[] }
+export interface DbGrant { user: string; table: string; privilege: string; via: string }
+export interface HbaRule { line: number; type: string; database: string; user: string; address: string; netmask: string; method: string; options: string; error: string }
+export interface DbSession { pid: number; user: string; database: string; client: string; application: string; since: string; state: string; ssl: boolean; tls_version: string }
+export interface DbTable { table: string; rows: number; seq_scans: number; index_scans: number; inserted: number }
+export interface DbAccess {
+  roles: DbRole[]; matrix: DbGrant[]; hba: HbaRule[]; connections: DbSession[]; settings: Record<string, string>;
+  tables: DbTable[]; findings: Fact[]; evidence: Evidence[]; read_at: string;
+}
+export interface AuditEvent {
+  kind: "audit" | "auth_failure" | "permission_denied" | "login" | "logout"; time: string; user: string; database: string;
+  source: string; session: string; pid: string; application: string; audit_class: string; command: string; object: string;
+  statement: string; message: string;
+}
+export interface AuditResult {
+  events: AuditEvent[]; matched: number; total: number; workbench_events: number; users: string[]; objects: string[];
+  counts: Record<string, number>; evidence: Evidence[]; read_at: string;
+}
+export interface AlertItem {
+  id: string; time: string; severity: string; rule: string; user: string; source: string; database: string; detail: string;
+  evidence: string; status: "open" | "acknowledged" | "resolved"; note: string; updated: string | null;
+  rule_explained: string; benign_when: string; ask: string;
+}
+export interface AlertList { alerts: AlertItem[]; counts: Record<string, number>; evidence: Evidence[]; read_at: string }
+export const fetchDirectory = () => getJSON<Directory>("/api/identity/directory");
+export const fetchDbAccess = () => getJSON<DbAccess>("/api/database/access");
+export const runLoginTest = (kind: "ldap" | "db", user: string, mode: string) => postJSON<LoginTest>("/api/identity/login-test", { kind, user, mode });
+export function fetchAudit(f: { kind?: string; user?: string; object?: string; text?: string; include_workbench?: boolean }) {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(f)) if (v !== undefined && v !== "" && v !== false) q.set(k, String(v));
+  return getJSON<AuditResult>(`/api/audit?${q}`);
+}
+export const fetchAlerts = () => getJSON<AlertList>("/api/alerts");
+export const setAlert = (id: string, status: AlertItem["status"], note: string) => postJSON<{ status: string }>(`/api/alerts/${id}`, { status, note });
+export const fetchRelated = (id: string) => getJSON<{ alert: AlertItem; events: AuditEvent[]; window_minutes: number }>(`/api/alerts/${id}/related`);

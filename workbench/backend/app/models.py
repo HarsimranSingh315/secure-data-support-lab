@@ -248,3 +248,89 @@ class Incident(BaseModel):
     reveal: str | None = None
     runbook: str
     last_run: IncidentRun | None = None
+
+
+# ---------------------------------------------------------------- identity, database, audit
+class DirUser(BaseModel):
+    dn: str
+    uid: str
+    cn: str
+    mail: str
+    uid_number: str
+    home: str
+    groups: list[str]
+    has_password: bool
+
+
+class DirGroup(BaseModel):
+    dn: str
+    cn: str
+    gid: str
+    members: list[str]
+
+
+class Directory(BaseModel):
+    base_dn: str
+    users: list[DirUser]
+    groups: list[DirGroup]
+    ous: list[str]
+    entries: int
+    evidence: list[Evidence]
+    read_at: str
+
+
+class LoginTest(BaseModel):
+    kind: Literal["ldap", "db"]
+    user: str
+    mode: str
+    status: Literal["pass", "fail"]
+    summary: str
+    meaning: str
+    evidence: list[Evidence]
+    ran_at: str
+
+
+class DbAccess(BaseModel):
+    roles: list[dict]
+    matrix: list[dict]
+    hba: list[dict]
+    connections: list[dict]
+    settings: dict[str, str]
+    tables: list[dict]
+    findings: list[Fact]
+    evidence: list[Evidence]
+    read_at: str
+
+
+class AuditEvent(BaseModel):
+    kind: Literal["audit", "auth_failure", "permission_denied", "login", "logout"]
+    time: str
+    user: str
+    database: str
+    source: str
+    session: str
+    pid: str
+    application: str = ""
+    audit_class: str = ""
+    command: str = ""
+    object: str = ""
+    statement: str = ""
+    message: str = ""
+
+
+class AlertItem(BaseModel):
+    id: str
+    time: str
+    severity: str
+    rule: str
+    user: str
+    source: str
+    database: str
+    detail: str
+    evidence: str
+    status: Literal["open", "acknowledged", "resolved"]
+    note: str
+    updated: str | None
+    rule_explained: str
+    benign_when: str
+    ask: str

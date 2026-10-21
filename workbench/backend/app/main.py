@@ -14,6 +14,13 @@ GET  /api/captures/options      capture points, filters, test traffic
 POST /api/captures              capture on a lab device and analyse it
 POST /api/captures/upload       analyse an uploaded pcap (raw body, max 10 MB)
 GET  /api/captures[/{id}[/pcap|/packets/{n}]]
+GET  /api/identity/directory     users and groups (slapcat on the directory server, hashes removed)
+POST /api/identity/login-test    real login from Site A: {"kind": "ldap"|"db", "user", "mode"}
+GET  /api/database/access        roles, effective table access, pg_hba rules, sessions, TLS, audit settings
+GET  /api/audit                  search the database audit trail (?kind=&user=&object=&text=)
+GET  /api/alerts                 activity-monitor alerts with their triage status
+POST /api/alerts/{id}            {"status": "open"|"acknowledged"|"resolved", "note"}
+GET  /api/alerts/{id}/related    audit events from the same user/source around the alert
 
 There is deliberately no endpoint that accepts a command, host or file path: parameters are
 names from fixed allow-lists, validated before any command is built. Endpoints that change the
@@ -23,6 +30,7 @@ page open in the browser cannot trigger them (CSRF).
 from __future__ import annotations
 
 import asyncio
+import re
 import logging
 import os
 import threading
@@ -37,13 +45,15 @@ from fastapi.staticfiles import StaticFiles
 
 from .checks import SPECS, now, run_check
 from . import captures as cap_mod
+from . import data as data_mod
 from . import incidents as inc_mod
 from .diagnostics import InvalidRequest, catalog, diagnose, run_op
+from .models import DbAccess, Directory, LoginTest
 from .models import CaptureAnalysis, CaptureMeta, Check, DiagResult, Event, Incident, Overview, Topology, WizardResult
 from .topology import collect
 from .runner import DockerRunner, Runner
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 MAX_PARALLEL_DIAG = 3          # diagnostics running at once; more get HTTP 429
 MIN_INTERVAL_S = 2.0          # overview results are reused for this long (protects the lab)
 STATIC = Path(os.environ.get("WB_STATIC", Path(__file__).resolve().parent.parent / "static"))
@@ -279,6 +289,67 @@ def create_app(runner: Runner | None = None) -> FastAPI:
     @app.get("/api/captures/{cid}/packets/{no}")
     async def capture_packet(cid: str, no: int) -> dict:
         return await asyncio.to_thread(cap_call, cap_mod.packet_detail, monitor.runner, cid, no)
+
+    # ------------------------------------------------------------- identity, database, audit, alerts
+
+    def data_call(fn, *args, **kw):
+        try:
+            return fn(*args, **kw)
+        except data_mod.DataError as exc:
+            raise HTTPException(exc.status, str(exc)) from None
+        except FileNotFoundError:
+            raise HTTPException(404, "not found") from None
+
+    @app.get("/api/identity/directory", response_model=Directory)
+    async def identity_directory() -> Directory:
+        return await asyncio.to_thread(data_call, data_mod.directory, monitor.runner)
+
+    @app.post("/api/identity/login-test", response_model=LoginTest)
+    async def login_test(request: Request) -> LoginTest:
+        guard(request)
+        try:
+            body = await request.json()
+            kind, user, mode = str(body["kind"]), str(body["user"]), str(body["mode"])
+        except (ValueError, KeyError, TypeError):
+            raise HTTPException(400, "expected JSON: kind, user, mode") from None
+        fn = {"ldap": data_mod.ldap_bind_test, "db": data_mod.db_login_test}.get(kind)
+        if not fn:
+            raise HTTPException(400, "kind must be ldap or db")
+        try:
+            return await asyncio.to_thread(limited, data_call, fn, monitor.runner, user, mode)
+        finally:
+            monitor._cache = None
+
+    @app.get("/api/database/access", response_model=DbAccess)
+    async def database_access() -> DbAccess:
+        return await asyncio.to_thread(data_call, data_mod.database, monitor.runner)
+
+    @app.get("/api/audit")
+    async def audit_search(kind: str = Query("", max_length=20), user: str = Query("", max_length=80),
+                           object: str = Query("", max_length=80), text: str = Query("", max_length=80),
+                           include_workbench: bool = False) -> dict:
+        return await asyncio.to_thread(data_call, data_mod.audit, monitor.runner, kind, user, object, text,
+                                       300, include_workbench)
+
+    @app.get("/api/alerts")
+    async def alerts_list() -> dict:
+        return await asyncio.to_thread(data_call, data_mod.alerts, monitor.runner)
+
+    @app.post("/api/alerts/{aid}")
+    async def alert_update(aid: str, request: Request) -> dict:
+        guard(request)
+        try:
+            body = await request.json()
+            status, note = str(body["status"]), str(body.get("note", ""))
+        except (ValueError, KeyError, TypeError):
+            raise HTTPException(400, "expected JSON: status, note") from None
+        return data_call(data_mod.set_alert, aid, status, note)
+
+    @app.get("/api/alerts/{aid}/related")
+    async def alert_related(aid: str) -> dict:
+        if not re.fullmatch(r"[0-9a-f]{12}", aid):
+            raise HTTPException(400, "bad alert id")
+        return await asyncio.to_thread(data_call, data_mod.related_events, monitor.runner, aid)
 
     @app.exception_handler(Exception)
     async def unexpected(_: Request, exc: Exception):

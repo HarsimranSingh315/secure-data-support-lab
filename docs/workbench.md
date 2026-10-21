@@ -116,6 +116,39 @@ upload a `.pcap` (max 10 MB). The workbench decodes it with tshark in the toolbo
 Routers capture with `-Q in` so a forwarded packet is counted once, not on both interfaces.
 Snap length is 256 bytes: headers and handshakes, not bulk data.
 
+## Identity & DB (status: implemented, tested)
+
+- **Directory**: users, groups and memberships, read on the directory server with `slapcat`
+  (no network login; password hashes are stripped before anything is shown).
+- **Login tests** (real logins from Site A):
+  - **Directory bind**: correct password (success), wrong password (`Invalid credentials (49)`),
+    or correct password without StartTLS (`Confidentiality required (13)`, because slapd only
+    accepts passwords over TLS).
+  - **Database login**: the full chain of TLS to PostgreSQL with certificate verification, a
+    pg_hba.conf `ldap` rule, and PostgreSQL binding to the directory over StartTLS. A wrong
+    password here is a real failed login and counts towards the brute-force rule, on purpose.
+  - Passwords travel in a temporary file (directory) or the environment (database), never on
+    the command line, and are shown as `***` in the evidence.
+- **Database access**:
+  - an effective-privilege matrix (login role × table × SELECT/INSERT/UPDATE/DELETE, computed
+    with `has_table_privilege`, with the role each permission comes from)
+  - roles and memberships, the pg_hba.conf rules in order, current sessions with their TLS
+    version, table activity, and the TLS / password / pgAudit settings.
+
+  All of it comes from system-catalog queries run as the local `postgres` user. Because pgAudit
+  has `log_catalog = off`, these reads are not audited and cannot trigger the activity monitor.
+
+## Audit & alerts (status: implemented, tested)
+
+- **Alerts** from the activity monitor:
+  - each explained: what the rule detects, when it is benign, and what to ask
+  - triage: acknowledge or resolve with a note, kept in `.workbench/alerts-state.json`
+  - the audit events from the same user or source within ±3 minutes, as the evidence behind it
+- **Audit trail search** over PostgreSQL's CSV log (pgAudit reads/writes/DDL/role changes,
+  logins, logouts, failed logins, permission denials), filtered by kind, user, object and text.
+  The workbench's own catalog sessions are tagged `application_name=datashield-workbench` and
+  hidden by default, with a toggle to show them: its footprint is visible, not secret.
+
 ## How it works
 
 ```
@@ -173,6 +206,14 @@ Mac can use it), and persistent status history (the Overview timeline resets whe
 restarts; incident state, actions and captures are kept in `.workbench/`).
 
 ## Tests (actually run)
+
+Day 4 (`tests/test_day4.py`, 25 tests): recorded from the replica running the repo's own OpenLDAP
+and PostgreSQL configuration (pgAudit, LDAP StartTLS authentication). Real activity was generated
+(bulk export, failed logins, permission denial, GRANT) and the real `services/dam/dam.py` produced
+the alerts. Covered: directory parsing without hashes, the three bind outcomes, the database login
+through LDAP with the password redacted, the privilege matrix (including after the revoke fix),
+the hba-change scenario, catalog-only queries, audit parsing and filters, alert triage, related
+events, and the API guard. Before packaging both pages ran in a browser against the replica.
 
 Day 3 (`tests/test_day3.py`, 29 tests): the incident tests run the repository's **real**
 `scripts/scenario.sh` with only `docker compose` replaced by a stub that records each call, and

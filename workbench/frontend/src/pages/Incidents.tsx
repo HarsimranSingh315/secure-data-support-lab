@@ -4,12 +4,13 @@ import { ago, clock } from "../status";
 import { Markdown } from "../components/Markdown";
 import { Collapsible } from "../components/Evidence";
 
-export type Goto = (page: "overview" | "map" | "diagnostics" | "captures", preset?: Record<string, string | number>) => void;
+type Target = "overview" | "map" | "diagnostics" | "captures" | "identity" | "audit";
+export type Goto = (page: Target, preset?: Record<string, string | number>) => void;
 
 const STATE_LABEL = { ready: "Ready", active: "In progress", resolved: "Resolved" } as const;
 
 // Where to start looking, by area. Deliberately generic: tools, not answers.
-const START: Record<string, { label: string; page: "overview" | "map" | "diagnostics" | "captures"; preset?: Record<string, string | number> }[]> = {
+const START: Record<string, { label: string; page: Target; preset?: Record<string, string | number> }[]> = {
   Network: [
     { label: "Network map", page: "map" },
     { label: "Guided diagnosis", page: "diagnostics" },
@@ -21,7 +22,7 @@ const START: Record<string, { label: string; page: "overview" | "map" | "diagnos
     { label: "Capture at the client", page: "captures", preset: { point: "toolbox", filter: "db", traffic: "db" } },
   ],
   Identity: [
-    { label: "Overview", page: "overview" },
+    { label: "Login tests", page: "identity" },
     { label: "TLS test on LDAP", page: "diagnostics", preset: { op: "tls", target: "ldap", port: 389 } },
     { label: "Capture LDAP", page: "captures", preset: { point: "toolbox", filter: "ldap", traffic: "none" } },
   ],
@@ -31,10 +32,12 @@ const START: Record<string, { label: string; page: "overview" | "map" | "diagnos
   ],
   Database: [
     { label: "Overview", page: "overview" },
-    { label: "Guided diagnosis", page: "diagnostics" },
+    { label: "Database access", page: "identity" },
+    { label: "Audit trail", page: "audit" },
   ],
   Security: [
-    { label: "Overview (activity monitor)", page: "overview" },
+    { label: "Alerts", page: "audit" },
+    { label: "Database access", page: "identity" },
   ],
 };
 

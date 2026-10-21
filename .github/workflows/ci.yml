@@ -101,6 +101,20 @@ jobs:
           post /api/incidents/firewall-drop/fix | jq -e '.state == "resolved" and (.reveal | startswith("Firewall"))'
           api "/api/diagnose?target=db&port=5432" | jq -e '.verdict == "pass"'
           api /api/actions | jq -e 'length >= 2'
+      - name: Workbench identity, database access, login tests, audit and alerts
+        run: |
+          api()  { curl -sf --cacert certs/ca-chain.pem "https://localhost:9443$1"; }
+          post() { curl -sf --cacert certs/ca-chain.pem -X POST -H "X-Workbench-Action: 1" -H "Content-Type: application/json" "https://localhost:9443$1" -d "$2"; }
+          api /api/identity/directory | jq -e '([.users[].uid] | sort) == ["alice","bob","carol"] and (tostring | test("SSHA") | not)'
+          post /api/identity/login-test '{"kind":"db","user":"bob","mode":"correct"}' | jq -e '.status == "pass"'
+          post /api/identity/login-test '{"kind":"ldap","user":"bob","mode":"no_tls"}' | jq -e '.summary | startswith("Confidentiality required")'
+          api /api/database/access | jq -e '[.matrix[] | select(.table == "cardholders" and .privilege == "SELECT") | .user] | index("bob")'
+          post /api/incidents/data-exfiltration/break '' | jq -e '.state == "active"'
+          sleep 5
+          api /api/alerts | jq -e '[.alerts[].rule] | index("bulk-read-sensitive")'
+          api "/api/audit?kind=audit&user=bob" | jq -e '[.events[].object] | index("public.cardholders")'
+          post /api/incidents/data-exfiltration/fix '' | jq -e '.state == "resolved"'
+          api /api/database/access | jq -e '[.matrix[] | select(.table == "cardholders" and .privilege == "SELECT") | .user] | index("bob") | not'
       - name: Scenario round-trips
         run: |
           for s in firewall-drop kms-sealed data-exfiltration; do

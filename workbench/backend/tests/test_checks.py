@@ -268,7 +268,8 @@ def test_api_overview_is_cached_briefly(client):
 def test_only_the_guarded_action_endpoints_accept_writes(client):
     c, _, app = client
     writes = sorted(r.path for r in app.routes for m in (getattr(r, "methods", None) or ()) if m in ("POST", "PUT", "PATCH", "DELETE"))
-    assert writes == ["/api/captures", "/api/captures/upload", "/api/incidents/{sid}/{action}"]
+    assert writes == ["/api/alerts/{aid}", "/api/captures", "/api/captures/upload", "/api/identity/login-test",
+                      "/api/incidents/{sid}/{action}"]
     assert c.post("/api/overview").status_code == 405
     assert {"/api/health", "/api/overview", "/api/events"} <= {r.path for r in app.routes}
 

@@ -1,0 +1,51 @@
+{
+ "db psql -X -q -A -t -F \t -d appdb -c select line_number, type, array_to_string(database, ','), array_to_string(user_name, ','), coalesce(address, ''), coalesce(netmask, ''), auth_method, coalesce(array_to_string(options, ' '), ''), coalesce(error, '') from pg_hba_file_rules order by line_number": [
+  {
+   "exit_code": 0,
+   "output": "3\tlocal\tall\tpostgres\t\t\tpeer\t\t\n4\tlocal\tall\tall\t\t\tscram-sha-256\t\t\n11\thostssl\tappdb\t+ldap_users\t10.10.10.0\t255.255.255.0\tldap\tldapserver=ldap.site-a.lab ldapport=389 ldaptls=true ldapprefix=uid= ldapsuffix=,ou=people,dc=securedata,dc=lab ldapscope=2\t\n18\thostssl\tappdb\twb_probe\t10.10.10.10\t255.255.255.255\tscram-sha-256\t\t\n19\thost\tall\tall\t0.0.0.0\t0.0.0.0\treject\t\t\n",
+   "error": null
+  }
+ ],
+ "db psql -X -q -A -t -F \t -d appdb -c select r.rolname, c.relname, p.priv, has_table_privilege(r.oid, c.oid, p.priv) from pg_roles r cross join pg_class c join pg_namespace n on n.oid = c.relnamespace and n.nspname = 'public' and c.relkind = 'r' cross join (values ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE')) p(priv) where r.rolcanlogin and not r.rolsuper order by 1,2,3": [
+  {
+   "exit_code": 0,
+   "output": "alice\tcardholders\tDELETE\tt\nalice\tcardholders\tINSERT\tt\nalice\tcardholders\tSELECT\tt\nalice\tcardholders\tUPDATE\tt\nalice\torders\tDELETE\tt\nalice\torders\tINSERT\tt\nalice\torders\tSELECT\tt\nalice\torders\tUPDATE\tt\nbob\tcardholders\tDELETE\tf\nbob\tcardholders\tINSERT\tf\nbob\tcardholders\tSELECT\tt\nbob\tcardholders\tUPDATE\tf\nbob\torders\tDELETE\tf\nbob\torders\tINSERT\tf\nbob\torders\tSELECT\tt\nbob\torders\tUPDATE\tf\ncarol\tcardholders\tDELETE\tf\ncarol\tcardholders\tINSERT\tf\ncarol\tcardholders\tSELECT\tt\ncarol\tcardholders\tUPDATE\tf\ncarol\torders\tDELETE\tf\ncarol\torders\tINSERT\tf\ncarol\torders\tSELECT\tt\ncarol\torders\tUPDATE\tf\nsvc_app\tcardholders\tDELETE\tf\nsvc_app\tcardholders\tINSERT\tt\nsvc_app\tcardholders\tSELECT\tt\nsvc_app\tcardholders\tUPDATE\tf\nsvc_app\torders\tDELETE\tf\nsvc_app\torders\tINSERT\tt\nsvc_app\torders\tSELECT\tt\nsvc_app\torders\tUPDATE\tf\n",
+   "error": null
+  }
+ ],
+ "db psql -X -q -A -t -F \t -d appdb -c select c.relname, coalesce(g.rolname, 'PUBLIC'), a.privilege_type from pg_class c join pg_namespace n on n.oid = c.relnamespace and n.nspname = 'public', aclexplode(c.relacl) a left join pg_roles g on g.oid = a.grantee where c.relkind = 'r' order by 1,2,3": [
+  {
+   "exit_code": 0,
+   "output": "cardholders\tanalyst\tSELECT\ncardholders\tdba\tDELETE\ncardholders\tdba\tINSERT\ncardholders\tdba\tREFERENCES\ncardholders\tdba\tSELECT\ncardholders\tdba\tTRIGGER\ncardholders\tdba\tTRUNCATE\ncardholders\tdba\tUPDATE\ncardholders\tpostgres\tDELETE\ncardholders\tpostgres\tINSERT\ncardholders\tpostgres\tREFERENCES\ncardholders\tpostgres\tSELECT\ncardholders\tpostgres\tTRIGGER\ncardholders\tpostgres\tTRUNCATE\ncardholders\tpostgres\tUPDATE\ncardholders\tsvc_app\tINSERT\ncardholders\tsvc_app\tSELECT\norders\tanalyst\tSELECT\norders\tdba\tDELETE\norders\tdba\tINSERT\norders\tdba\tREFERENCES\norders\tdba\tSELECT\norders\tdba\tTRIGGER\norders\tdba\tTRUNCATE\norders\tdba\tUPDATE\norders\tpostgres\tDELETE\norders\tpostgres\tINSERT\norders\tpostgres\tREFERENCES\norders\tpostgres\tSELECT\norders\tpostgres\tTRIGGER\norders\tpostgres\tTRUNCATE\norders\tpostgres\tUPDATE\norders\tsvc_app\tINSERT\norders\tsvc_app\tSELECT\n",
+   "error": null
+  }
+ ],
+ "db psql -X -q -A -t -F \t -d appdb -c select a.pid, coalesce(a.usename, ''), coalesce(a.datname, ''), coalesce(host(a.client_addr), 'local'), coalesce(a.application_name, ''), to_char(a.backend_start at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), coalesce(a.state, ''), coalesce(s.ssl, false), coalesce(s.version, '') from pg_stat_activity a left join pg_stat_ssl s on s.pid = a.pid where a.backend_type = 'client backend' and a.pid <> pg_backend_pid() order by a.backend_start": [
+  {
+   "exit_code": 0,
+   "output": "",
+   "error": null
+  }
+ ],
+ "db psql -X -q -A -t -F \t -d appdb -c select r.rolname, r.rolcanlogin, r.rolsuper, coalesce(string_agg(b.rolname, ',' order by b.rolname), '') from pg_roles r left join pg_auth_members m on m.member = r.oid left join pg_roles b on b.oid = m.roleid where r.rolname !~ '^pg_' group by 1,2,3 order by 1": [
+  {
+   "exit_code": 0,
+   "output": "alice\tt\tf\tdba,ldap_users\nanalyst\tf\tf\t\nbob\tt\tf\tanalyst,ldap_users\ncarol\tt\tf\tanalyst,ldap_users\ndba\tf\tf\t\nldap_users\tf\tf\t\npostgres\tt\tt\t\nsvc_app\tt\tf\t\n",
+   "error": null
+  }
+ ],
+ "db psql -X -q -A -t -F \t -d appdb -c select relname, n_live_tup, seq_scan, coalesce(idx_scan, 0), n_tup_ins from pg_stat_user_tables order by relname": [
+  {
+   "exit_code": 0,
+   "output": "cardholders\t3\t3\t1\t3\norders\t0\t1\t0\t0\n",
+   "error": null
+  }
+ ],
+ "db psql -X -q -A -t -F \t -d appdb -c select name, setting from pg_settings where name in ('ssl', 'ssl_min_protocol_version', 'password_encryption', 'pgaudit.log', 'pgaudit.log_catalog', 'pgaudit.log_relation', 'log_connections', 'log_disconnections', 'server_version') order by name": [
+  {
+   "exit_code": 0,
+   "output": "log_connections\ton\nlog_disconnections\ton\npassword_encryption\tscram-sha-256\npgaudit.log\tread, write, ddl, role\npgaudit.log_catalog\toff\npgaudit.log_relation\ton\nserver_version\t16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)\nssl\ton\nssl_min_protocol_version\tTLSv1.2\n",
+   "error": null
+  }
+ ]
+}
