@@ -1,0 +1,18 @@
+CONNECTION ESTABLISHED
+Protocol version: TLSv1.3
+Ciphersuite: TLS_AES_256_GCM_SHA384
+Peer certificate: C = CA, O = SecureData Lab, CN = app.site-b.lab
+Hash used: SHA256
+Signature type: RSA-PSS
+Verification: OK
+Verified peername: app.site-b.lab
+Server Temp Key: X25519, 253 bits
+DONE
+s_client_exit=0
+--- certificate presented
+subject=C = CA, O = SecureData Lab, CN = app.site-b.lab
+issuer=C = CA, O = SecureData Lab, CN = SecureData Lab Issuing CA 1
+notBefore=Oct 20 14:32:28 2026 GMT
+notAfter=Nov 21 14:32:28 2027 GMT
+X509v3 Subject Alternative Name: 
+    DNS:app.site-b.lab, IP Address:10.20.20.30

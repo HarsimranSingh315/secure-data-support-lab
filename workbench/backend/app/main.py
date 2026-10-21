@@ -3,8 +3,13 @@
 GET /api/health     the workbench itself is up (does not touch the lab)
 GET /api/overview   runs every allow-listed lab check and returns cards + recent status changes
 GET /api/events     recent status changes only
+GET /api/topology   live network map: interfaces, OSPF adjacencies, routes, current path
+GET /api/diagnostics            catalog of allow-listed operations, targets and ports
+GET /api/diagnostics/{op}       run one operation (?target=db&port=5432&router=r1)
+GET /api/diagnose               guided diagnosis from Site A to one service (?target=db&port=5432)
 
-There is deliberately no endpoint that accepts a command, host or file path.
+There is deliberately no endpoint that accepts a command, host or file path: parameters are
+names from fixed allow-lists, validated before any command is built.
 """
 from __future__ import annotations
 
@@ -17,15 +22,18 @@ import uuid
 from collections import deque
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .checks import SPECS, now, run_check
-from .models import Check, Event, Overview
+from .diagnostics import InvalidRequest, catalog, diagnose, run_op
+from .models import Check, DiagResult, Event, Overview, Topology, WizardResult
+from .topology import collect
 from .runner import DockerRunner, Runner
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
+MAX_PARALLEL_DIAG = 3          # diagnostics running at once; more get HTTP 429
 MIN_INTERVAL_S = 2.0          # overview results are reused for this long (protects the lab)
 STATIC = Path(os.environ.get("WB_STATIC", Path(__file__).resolve().parent.parent / "static"))
 
@@ -112,6 +120,45 @@ def create_app(runner: Runner | None = None) -> FastAPI:
     @app.get("/api/events")
     def events() -> list[Event]:
         return list(monitor.events)
+
+    slots = threading.BoundedSemaphore(MAX_PARALLEL_DIAG)
+    topo_cache: dict = {"at": 0.0, "value": None}
+    topo_lock = threading.Lock()
+
+    def limited(fn, *args, **kwargs):
+        if not slots.acquire(blocking=False):
+            raise HTTPException(429, "Too many diagnostics running; try again in a moment.")
+        try:
+            return fn(*args, **kwargs)
+        except InvalidRequest as exc:
+            raise HTTPException(400, str(exc)) from None
+        finally:
+            slots.release()
+
+    def topology_cached(force: bool) -> Topology:
+        with topo_lock:
+            if topo_cache["value"] is None or force or time.monotonic() - topo_cache["at"] > 3:
+                topo_cache["value"] = collect(monitor.runner)
+                topo_cache["at"] = time.monotonic()
+            return topo_cache["value"]
+
+    @app.get("/api/topology", response_model=Topology)
+    async def topology(refresh: bool = False) -> Topology:
+        return await asyncio.to_thread(topology_cached, refresh)
+
+    @app.get("/api/diagnostics")
+    def diagnostics_catalog() -> dict:
+        return catalog()
+
+    @app.get("/api/diagnostics/{op}", response_model=DiagResult)
+    async def diagnostics_run(op: str, target: str | None = Query(None, max_length=16),
+                              port: int | None = Query(None, ge=1, le=65535),
+                              router: str | None = Query(None, max_length=4)) -> DiagResult:
+        return await asyncio.to_thread(limited, run_op, monitor.runner, op, target, port, router)
+
+    @app.get("/api/diagnose", response_model=WizardResult)
+    async def guided(target: str = Query(..., max_length=16), port: int = Query(..., ge=1, le=65535)) -> WizardResult:
+        return await asyncio.to_thread(limited, diagnose, monitor.runner, target, port)
 
     @app.exception_handler(Exception)
     async def unexpected(_: Request, exc: Exception):

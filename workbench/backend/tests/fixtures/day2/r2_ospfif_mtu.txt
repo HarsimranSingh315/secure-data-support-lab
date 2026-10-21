@@ -1,0 +1,26 @@
+eth0 is up
+  ifindex 23, MTU 1500 bytes, BW 10000 Mbit <UP,BROADCAST,RUNNING,MULTICAST>
+  Internet Address 10.0.12.12/24, Broadcast 10.0.12.255, Area 0.0.0.0
+  MTU mismatch detection: enabled
+  Router ID 2.2.2.2, Network Type BROADCAST, Cost: 10
+  Transmit Delay is 1 sec, State Backup, Priority 1
+  Designated Router (ID) 1.1.1.1 Interface Address 10.0.12.11/24
+  Backup Designated Router (ID) 2.2.2.2, Interface Address 10.0.12.12
+  Saved Network-LSA sequence number 0x80000000
+  Multicast group memberships: OSPFAllRouters OSPFDesignatedRouters
+  Timer intervals configured, Hello 2s, Dead 8s, Wait 8s, Retransmit 5
+    Hello due in 0.808s
+  Neighbor Count is 1, Adjacent neighbor count is 1
+eth1 is up
+  ifindex 26, MTU 1400 bytes, BW 10000 Mbit <UP,BROADCAST,RUNNING,MULTICAST>
+  Internet Address 10.0.23.22/24, Broadcast 10.0.23.255, Area 0.0.0.0
+  MTU mismatch detection: enabled
+  Router ID 2.2.2.2, Network Type BROADCAST, Cost: 10
+  Transmit Delay is 1 sec, State Backup, Priority 1
+  Designated Router (ID) 3.3.3.3 Interface Address 10.0.23.23/24
+  Backup Designated Router (ID) 2.2.2.2, Interface Address 10.0.23.22
+  Multicast group memberships: OSPFAllRouters OSPFDesignatedRouters
+  Timer intervals configured, Hello 2s, Dead 8s, Wait 8s, Retransmit 5
+    Hello due in 0.808s
+  Neighbor Count is 1, Adjacent neighbor count is 0
+

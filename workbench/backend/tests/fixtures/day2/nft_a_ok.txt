@@ -1,0 +1,22 @@
+table inet labfw { # handle 1
+	counter dropped_to_site_b { # handle 3
+		comment "packets dropped on the way into Site B"
+		packets 0 bytes 0
+	}
+
+	chain forward { # handle 1
+		type filter hook forward priority filter; policy accept;
+		ip daddr 10.20.20.0/24 jump to_site_b # handle 4
+	}
+
+	chain to_site_b { # handle 2
+		ct state established,related accept # handle 5
+		ct state invalid drop # handle 6
+		icmp type { echo-reply, destination-unreachable, echo-request, time-exceeded } accept comment "ping and traceroute replies" # handle 8
+		udp dport 33434-33534 accept comment "traceroute probes" # handle 9
+		ip saddr 10.10.10.0/24 ip daddr 10.20.20.10 tcp dport 5432 counter packets 4 bytes 240 accept comment "site A -> PostgreSQL (TLS)" # handle 10
+		ip saddr 10.10.10.0/24 ip daddr 10.20.20.20 tcp dport 8200 counter packets 0 bytes 0 accept comment "site A -> KMS API (TLS)" # handle 11
+		ip saddr 10.10.10.0/24 ip daddr 10.20.20.30 tcp dport 8443 counter packets 2 bytes 120 accept comment "site A -> app (HTTPS)" # handle 12
+		counter name "dropped_to_site_b" drop # handle 13
+	}
+}

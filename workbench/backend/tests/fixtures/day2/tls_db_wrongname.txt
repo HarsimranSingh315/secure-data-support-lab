@@ -1,0 +1,11 @@
+depth=0 C = CA, O = SecureData Lab, CN = db01.site-b.lab
+verify error:num=62:hostname mismatch
+4087078F9D7F0000:error:0A000086:SSL routines:tls_post_process_server_certificate:certificate verify failed:../ssl/statem/statem_clnt.c:1889:
+s_client_exit=1
+--- certificate presented
+subject=C = CA, O = SecureData Lab, CN = db01.site-b.lab
+issuer=C = CA, O = SecureData Lab, CN = SecureData Lab Issuing CA 1
+notBefore=Oct 20 14:34:31 2026 GMT
+notAfter=Nov 21 14:34:31 2027 GMT
+X509v3 Subject Alternative Name: 
+    DNS:db01.site-b.lab

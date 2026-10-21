@@ -1,0 +1,5 @@
+Routing entry for 10.20.20.0/24
+  Known via "ospf", distance 110, metric 110, best
+  Last update 00:00:12 ago
+  * 10.0.13.13, via eth2, weight 1
+

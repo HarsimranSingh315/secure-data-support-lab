@@ -1,0 +1,2 @@
+ldap.site-a.lab: connect: Connection refused
+ldap.site-a.lab: line 1: /dev/tcp/ldap.site-a.lab/636: Connection refused

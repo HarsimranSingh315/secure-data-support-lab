@@ -12,12 +12,13 @@ const NODES: { label: string; sub: string; ids: string[]; open: string }[] = [
   { label: "Site B", sub: "app · db · kms", ids: ["app", "db", "kms"], open: "app" },
 ];
 
-export function PathStrip({ checks, onSelect }: { checks: Check[]; onSelect: (id: string) => void }) {
+export function PathStrip({ checks, onSelect, onMap }: { checks: Check[]; onSelect: (id: string) => void; onMap: () => void }) {
   return (
     <section className="path panel" aria-label="Request path from Site A to Site B">
       <div className="path-head">
         <h3>Request path</h3>
         <span className="muted small">How a Site A analyst reaches the data in Site B. Click a hop for its evidence.</span>
+        <button className="btn btn-ghost btn-sm push-right" onClick={onMap}>Open network map</button>
       </div>
       <ol className="path-row">
         {NODES.map((n, i) => {

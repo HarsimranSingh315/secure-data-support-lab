@@ -1,0 +1,12 @@
+depth=0 CN = app.site-b.lab
+verify error:num=10:certificate has expired
+notAfter=Jan  2 00:00:00 2025 GMT
+40B77ACB137F0000:error:0A000086:SSL routines:tls_post_process_server_certificate:certificate verify failed:../ssl/statem/statem_clnt.c:1889:
+s_client_exit=1
+--- certificate presented
+subject=CN = app.site-b.lab
+issuer=C = CA, O = SecureData Lab, CN = SecureData Lab Issuing CA 1
+notBefore=Jan  1 00:00:00 2025 GMT
+notAfter=Jan  2 00:00:00 2025 GMT
+X509v3 Subject Alternative Name: 
+    DNS:app.site-b.lab

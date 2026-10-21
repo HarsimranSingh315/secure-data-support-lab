@@ -1,0 +1,11 @@
+depth=0 CN = kms.site-b.lab
+verify error:num=18:self-signed certificate
+40472B15367F0000:error:0A000086:SSL routines:tls_post_process_server_certificate:certificate verify failed:../ssl/statem/statem_clnt.c:1889:
+s_client_exit=1
+--- certificate presented
+subject=CN = kms.site-b.lab
+issuer=CN = kms.site-b.lab
+notBefore=Oct 20 14:34:34 2026 GMT
+notAfter=Oct 20 14:34:34 2027 GMT
+X509v3 Subject Alternative Name: 
+    DNS:kms.site-b.lab

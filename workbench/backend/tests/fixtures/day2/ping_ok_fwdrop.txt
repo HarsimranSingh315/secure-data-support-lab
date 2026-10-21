@@ -1,0 +1,8 @@
+PING db.site-b.lab (10.20.20.10) 56(84) bytes of data.
+64 bytes from db.site-b.lab (10.20.20.10): icmp_seq=1 ttl=61 time=0.335 ms
+64 bytes from db.site-b.lab (10.20.20.10): icmp_seq=2 ttl=61 time=0.133 ms
+64 bytes from db.site-b.lab (10.20.20.10): icmp_seq=3 ttl=61 time=0.112 ms
+
+--- db.site-b.lab ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 641ms
+rtt min/avg/max/mdev = 0.112/0.193/0.335/0.100 ms

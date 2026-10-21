@@ -1,0 +1,4 @@
+traceroute to db.site-b.lab (10.20.20.10), 8 hops max, 60 byte packets
+ 1  10.10.10.2  0.051 ms
+ 2  10.0.13.13  0.029 ms
+ 3  10.20.20.10  0.150 ms

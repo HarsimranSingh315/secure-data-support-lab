@@ -54,3 +54,111 @@ class Overview(BaseModel):
     checked_at: str
     duration_ms: int
     lab_reachable: bool
+
+
+DiagStatus = Literal["pass", "warn", "fail", "error", "info"]
+
+
+class DiagResult(BaseModel):
+    op: str
+    title: str
+    status: DiagStatus
+    summary: str
+    meaning: str
+    facts: list[Fact]
+    evidence: list[Evidence]
+    ran_at: str
+
+
+class WizardStep(BaseModel):
+    label: str
+    result: DiagResult
+
+
+class WizardResult(BaseModel):
+    target: str
+    port: int
+    steps: list[WizardStep]
+    verdict: Literal["pass", "warn", "fail"]
+    layer: str            # where the problem is (or "None found")
+    conclusion: str
+
+
+class MapInterface(BaseModel):
+    name: str
+    address: str | None
+    state: str
+    mtu: int | None
+    link: str | None
+    ospf_cost: int | None = None
+    ospf_role: str | None = None
+    ospf_neighbors: int | None = None
+    ospf_adjacent: int | None = None
+
+
+class MapNeighbor(BaseModel):
+    router_id: str
+    name: str
+    state: str
+    interface: str
+    address: str
+    link: str | None
+
+
+class MapRoute(BaseModel):
+    prefix: str
+    protocol: str
+    next_hop: str
+    interface: str
+    metric: int | None
+    distance: int | None
+
+
+class MapRouter(BaseModel):
+    id: str
+    status: Status
+    summary: str
+    interfaces: list[MapInterface]
+    neighbors: list[MapNeighbor]
+    routes: list[MapRoute]
+    evidence: list[Evidence]
+
+
+class MapEnd(BaseModel):
+    router: str
+    address: str
+    interface: str | None
+    state: str | None
+    mtu: int | None
+    ospf_cost: int | None
+    neighbor_state: str | None
+
+
+class MapLink(BaseModel):
+    id: str
+    label: str
+    subnet: str
+    kind: Literal["lan", "transit"]
+    status: Status
+    summary: str
+    ends: list[MapEnd]
+
+
+class MapPath(BaseModel):
+    source: str
+    destination: str
+    hops: list[Fact]          # label = hop address, value = device name
+    links: list[str]
+    reached: bool
+    uses_backup: bool
+    summary: str
+    evidence: list[Evidence]
+    notes: list[str] = []
+
+
+class Topology(BaseModel):
+    routers: list[MapRouter]
+    links: list[MapLink]
+    path: MapPath
+    hosts: list[Fact]
+    checked_at: str

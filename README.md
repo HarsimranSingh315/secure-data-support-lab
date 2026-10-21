@@ -66,11 +66,18 @@ Lab users (directory passwords, lab only): `alice` / `Lab-alice-2026!` (DBA), `b
 
 ## DataShield Support Workbench (web console)
 
-`make up` also starts a web console at **https://localhost:9443**. Each card runs a real,
-allow-listed check inside the lab (OSPF neighbours, firewall policy, LDAP StartTLS, database
-reachability, app health, KMS seal state, activity monitor) and shows the exact command, its
-output and what it means. Break something with `make break` and watch the cards, the request
-path and the status timeline change. Details, threat model and tests: [docs/workbench.md](docs/workbench.md).
+`make up` also starts a web console at **https://localhost:9443**:
+
+- **Overview**: a live card per component (OSPF, firewall, LDAP StartTLS, database, app, KMS seal
+  state, activity monitor), each showing the exact command it ran, the output and what it means.
+- **Network map**: routers, links and servers coloured from live router data; click for
+  interfaces, MTU, OSPF costs, neighbours and routing tables; the current path to the database is
+  animated and the banner warns when it falls back to the backup link.
+- **Diagnostics**: a guided "why can't Site A reach X?" that walks name → ping → path → port → TLS
+  and names the failing layer, plus individual tests (TCP timeout vs refused, TLS certificate
+  checks, route lookups, OSPF interfaces, firewall counters).
+
+Break something with `make break` and find the cause in the UI. Details, threat model and tests: [docs/workbench.md](docs/workbench.md).
 
 ## Incident scenarios
 

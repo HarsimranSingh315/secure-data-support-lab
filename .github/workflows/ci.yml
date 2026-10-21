@@ -72,6 +72,19 @@ jobs:
           wb | jq -e '(.checks[] | select(.id == "kms") | .status) == "down"'
           ./scripts/scenario.sh fix kms-sealed
           wb | jq -e '(.checks[] | select(.id == "kms") | .status) == "ok"'
+      - name: Workbench map and guided diagnosis on the real lab
+        run: |
+          api() { curl -sf --cacert certs/ca-chain.pem "https://localhost:9443$1"; }
+          api "/api/topology?refresh=true" | jq '{path: .path.summary, links: [.links[] | {id, status}]}'
+          api "/api/topology?refresh=true" | jq -e '.path.reached and (.path.links | index("r1_r2")) and ([.links[].status] | all(. == "ok"))'
+          api "/api/diagnose?target=db&port=5432" | jq -e '.verdict == "pass"'
+          ./scripts/scenario.sh break firewall-drop
+          api "/api/diagnose?target=db&port=5432" | jq -e '.layer == "Firewall (port filtered)"'
+          ./scripts/scenario.sh fix firewall-drop
+          ./scripts/scenario.sh break core-link-down
+          sleep 12
+          api "/api/topology?refresh=true" | jq -e '.path.uses_backup and ([.links[] | select(.id == "r1_r2") | .status] == ["down"])'
+          ./scripts/scenario.sh fix core-link-down
       - name: Scenario round-trips
         run: |
           for s in firewall-drop kms-sealed data-exfiltration; do
